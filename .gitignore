@@ -4,3 +4,8 @@
 /src/node_modules/
 /src/public/dist/
 /src/public/hot
+/src/public/uploads/products/*
+!/src/public/uploads/products/.gitkeep
+/src/storage/logs/*
+!/src/storage/logs/.gitkeep
+.DS_Store

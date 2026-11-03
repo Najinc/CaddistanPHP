@@ -1,15 +1,17 @@
 {
-    "name": "laravel/laravel",
+    "name": "caddistan/shop",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Caddistan — boutique de caddies (projet sécurité web, PHP natif).",
+    "keywords": [
+        "php",
+        "ecommerce",
+        "security"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.5"
     },
-    "require-dev": {
-       
-    },
+    "require-dev": {},
     "autoload": {
         "psr-4": {
             "App\\": "app/"

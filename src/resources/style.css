@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* Les vues PHP contiennent les classes Tailwind à générer */
+@source "../views";
+
+@theme {
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --color-brand-50: #fff7ed;
+    --color-brand-100: #ffedd5;
+    --color-brand-500: #f97316;
+    --color-brand-600: #ea580c;
+    --color-brand-700: #c2410c;
+    --color-ink: #0f172a;
+}
+
 @layer base {
     html {
         @apply scroll-smooth antialiased;
@@ -7,104 +20,74 @@
     }
 
     body {
-        @apply p-4 min-h-screen bg-white text-gray-900 leading-relaxed;
-        @apply dark:bg-gray-950 dark:text-gray-100;
+        @apply min-h-screen flex flex-col bg-slate-50 text-slate-800 leading-relaxed;
     }
 
-    /* Headings */
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-        @apply font-semibold leading-tight tracking-tight text-balance;
+    h1, h2, h3, h4 {
+        @apply font-bold leading-tight tracking-tight text-balance text-ink;
     }
 
-    h1 {
-        @apply text-4xl md:text-5xl;
+    h1 { @apply text-3xl md:text-4xl; }
+    h2 { @apply text-2xl; }
+    h3 { @apply text-lg; }
+
+    p { @apply text-pretty; }
+
+    a { @apply transition-colors; }
+
+    img { @apply max-w-full h-auto; }
+
+    ::selection { @apply bg-brand-100 text-ink; }
+
+    :focus-visible { @apply outline-2 outline-offset-2 outline-brand-500; }
+}
+
+/* Utilitaire réutilisable via @apply dans les composants ci-dessous */
+@utility btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold
+        transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+@layer components {
+    .container-page {
+        @apply mx-auto w-full max-w-6xl px-4;
     }
 
-    h2 {
-        @apply text-3xl md:text-4xl;
+    .btn-primary { @apply btn bg-brand-600 text-white hover:bg-brand-700; }
+    .btn-secondary { @apply btn bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-100; }
+    .btn-danger { @apply btn bg-red-600 text-white hover:bg-red-700; }
+    .btn-link { @apply text-sm font-medium text-brand-700 hover:text-brand-600 hover:underline cursor-pointer; }
+
+    .card {
+        @apply rounded-xl bg-white shadow-sm ring-1 ring-slate-200;
     }
 
-    h3 {
-        @apply text-2xl;
+    .label {
+        @apply mb-1 block text-sm font-medium text-slate-700;
+    }
+    .input {
+        @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm
+            focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none;
     }
 
-    h4 {
-        @apply text-xl;
+    .badge {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
     }
 
-    h5 {
-        @apply text-lg;
+    .table {
+        @apply w-full text-left text-sm;
+    }
+    .table th {
+        @apply border-b border-slate-200 px-4 py-3 font-semibold text-slate-600;
+    }
+    .table td {
+        @apply border-b border-slate-100 px-4 py-3 align-middle;
     }
 
-    h6 {
-        @apply text-base;
+    .nav-link {
+        @apply rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-ink;
     }
-
-    p {
-        @apply text-pretty;
-    }
-
-    a {
-        @apply text-blue-600 underline underline-offset-2 transition-colors hover:text-blue-800;
-        @apply dark:text-blue-400 dark:hover:text-blue-300;
-    }
-
-    strong,
-    b {
-        @apply font-semibold;
-    }
-
-    small {
-        @apply text-sm;
-    }
-
-    code,
-    kbd,
-    samp,
-    pre {
-        @apply font-mono text-sm;
-    }
-
-    :not(pre)>code {
-        @apply rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800;
-    }
-
-    pre {
-        @apply overflow-x-auto rounded-lg bg-gray-100 p-4 dark:bg-gray-900;
-    }
-
-    ul {
-        @apply list-disc pl-6;
-    }
-
-    ol {
-        @apply list-decimal pl-6;
-    }
-
-    hr {
-        @apply my-8 border-gray-200 dark:border-gray-800;
-    }
-
-    blockquote {
-        @apply border-l-4 border-gray-300 pl-4 italic text-gray-700;
-        @apply dark:border-gray-700 dark:text-gray-300;
-    }
-
-    img,
-    video {
-        @apply max-w-full h-auto;
-    }
-
-    ::selection {
-        @apply bg-blue-200 text-gray-900;
-    }
-
-    :focus-visible {
-        @apply outline-2 outline-offset-2 outline-blue-500;
+    .nav-link.is-active {
+        @apply text-brand-700 bg-brand-50;
     }
 }

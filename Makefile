@@ -3,7 +3,7 @@ CERT_SRC  := caddy:/data/caddy/pki/authorities/local/root.crt
 TMP_CERT  := /tmp/$(CERT_NAME)
 HOSTS_FILE := /etc/hosts
 
-.PHONY: setup install_cert install_host dev stop_dev sh cp_env  install_dependencies build_app
+.PHONY: setup install_cert install_host dev stop stop_dev sh cp_env install_dependencies build_app db_shell db_reset
 
 setup: cp_env
 	$(MAKE) dev
@@ -71,6 +71,16 @@ build_app:
 
 sh:
 	docker compose exec -it app /bin/sh
+
+# Console MariaDB
+db_shell:
+	docker compose exec -it db sh -c 'mariadb -u"$$MARIADB_USER" -p"$$MARIADB_PASSWORD" "$$MARIADB_DATABASE"'
+
+# Supprime la base et la recrée depuis database/schema.sql + seed.sql
+db_reset:
+	docker compose rm -sf db
+	docker volume rm -f caddistan_db-data
+	docker compose up -d --wait db
 
 # Supprime aussi le fichier de HMR laissé lors de l'arrêt brutal de Vite
 stop_dev:
