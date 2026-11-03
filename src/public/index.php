@@ -11,6 +11,7 @@ use App\Core\HttpException;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
+use App\Core\ValidationException;
 use App\Core\View;
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -22,6 +23,8 @@ $router = require __DIR__ . '/../routes.php';
 
 try {
     $response = $router->dispatch($request);
+} catch (ValidationException $e) {
+    $response = handleValidationException($e, $request);
 } catch (HttpException $e) {
     $response = handleHttpException($e, $request);
 } catch (Throwable $e) {
@@ -29,6 +32,30 @@ try {
 }
 
 $response->send();
+
+/**
+ * Données invalides :
+ *  - API / AJAX : 422 + détail des erreurs en JSON ;
+ *  - formulaire HTML (POST) : retour au formulaire avec les erreurs et les saisies (pattern Post/Redirect/Get) ;
+ *  - page GET (filtres du catalogue…) : page d'erreur 422.
+ */
+function handleValidationException(ValidationException $e, Request $request): Response
+{
+    if ($request->wantsJson() || str_starts_with($request->path, '/api/')) {
+        return Response::json(['error' => $e->getMessage(), 'errors' => $e->errors], 422);
+    }
+
+    if ($request->method === 'POST') {
+        foreach ($e->errors as $message) {
+            Session::flash('error', $message);
+        }
+        Session::flashInput($request->all());
+
+        return Response::redirect($request->header('Referer') ?? '/');
+    }
+
+    return renderError(422, implode(' ', $e->errors), null, $request);
+}
 
 function handleHttpException(HttpException $e, Request $request): Response
 {
