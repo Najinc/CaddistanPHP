@@ -7,16 +7,16 @@
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label for="first_name" class="label">Prénom</label>
-                    <input id="first_name" name="first_name" class="input" required autocomplete="given-name" value="<?= old('first_name') ?>">
+                    <input id="first_name" name="first_name" class="input" required autocomplete="given-name" value="{{ old('first_name') }}">
                 </div>
                 <div>
                     <label for="last_name" class="label">Nom</label>
-                    <input id="last_name" name="last_name" class="input" required autocomplete="family-name" value="<?= old('last_name') ?>">
+                    <input id="last_name" name="last_name" class="input" required autocomplete="family-name" value="{{ old('last_name') }}">
                 </div>
             </div>
             <div>
                 <label for="email" class="label">Adresse e-mail</label>
-                <input id="email" name="email" type="email" class="input" required autocomplete="email" value="<?= old('email') ?>">
+                <input id="email" name="email" type="email" class="input" required autocomplete="email" value="{{ old('email') }}">
             </div>
             <div>
                 <label for="password" class="label">Mot de passe</label>

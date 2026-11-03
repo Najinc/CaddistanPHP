@@ -9,8 +9,8 @@ $styles = [
 <?php if ($flashes): ?>
     <div class="mb-6 space-y-2">
         <?php foreach ($flashes as $flash): ?>
-            <div class="flex items-start justify-between gap-4 rounded-lg px-4 py-3 text-sm ring-1 <?= $styles[$flash['type']] ?? $styles['info'] ?>" role="alert" data-dismissible>
-                <span><?= $flash['message'] ?></span>
+            <div class="flex items-start justify-between gap-4 rounded-lg px-4 py-3 text-sm ring-1 {{ $styles[$flash['type']] ?? $styles['info'] }}" role="alert" data-dismissible>
+                <span>{{ $flash['message'] }}</span>
                 <button type="button" class="cursor-pointer opacity-60 hover:opacity-100" aria-label="Fermer" data-dismiss>&times;</button>
             </div>
         <?php endforeach ?>

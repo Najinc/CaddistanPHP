@@ -19,7 +19,7 @@
         <div>
             <p class="font-semibold text-ink">Caddistan</p>
             <p class="mt-2">Livraison offerte dès 150 €. Retours sous 30 jours.</p>
-            <p class="mt-4 text-xs text-slate-400">Projet pédagogique — M2 Sécurité Web. © <?= date('Y') ?></p>
+            <p class="mt-4 text-xs text-slate-400">Projet pédagogique — M2 Sécurité Web. © {{ date('Y') }}</p>
         </div>
     </div>
 </footer>

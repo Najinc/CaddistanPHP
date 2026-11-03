@@ -21,6 +21,17 @@ function env(string $key, mixed $default = null): mixed
     return $value === false ? $default : $value;
 }
 
+/**
+ * Échappe une valeur pour l'afficher dans du HTML (contenu ou attribut entre guillemets).
+ * ENT_QUOTES : échappe " ET ' (sinon on peut sortir d'un attribut value='...').
+ * ENT_SUBSTITUTE : une séquence UTF-8 invalide est remplacée au lieu de vider toute la chaîne.
+ * 'UTF-8' : charset explicite, identique à celui annoncé dans le Content-Type.
+ */
+function e(mixed $value): string
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
 /** Formate un montant en centimes : 18900 => "189,00 €". */
 function money(int $cents): string
 {
