@@ -6,6 +6,7 @@ use App\Core\Auth;
 use App\Core\HttpException;
 use App\Core\Response;
 use App\Core\Session;
+use App\Core\Validator;
 use App\Repositories\OrderRepository;
 use App\Services\Cart;
 use RuntimeException;
@@ -34,13 +35,15 @@ final class CheckoutController extends Controller
             return $this->redirect('/panier');
         }
 
+        $v = $this->validator();
         $shipping = [
-            'name'    => $this->request->string('name'),
-            'address' => $this->request->string('address'),
-            'zip'     => $this->request->string('zip'),
-            'city'    => $this->request->string('city'),
-            'phone'   => $this->request->string('phone'),
+            'name'    => $v->string('name', 'Le nom', 2, 200, Validator::REGEX_NAME),
+            'address' => $v->string('address', "L'adresse", 5, 255),
+            'zip'     => $v->string('zip', 'Le code postal', 5, 5, '/^[0-9]{5}$/'),
+            'city'    => $v->string('city', 'La ville', 1, 100, Validator::REGEX_NAME),
+            'phone'   => $v->string('phone', 'Le téléphone', 10, 20, '/^\+?[0-9 .]+$/'),
         ];
+        $v->validate();
 
         try {
             $orderId = (new OrderRepository())->create(Auth::id(), $shipping, $cart['lines']);
@@ -58,7 +61,7 @@ final class CheckoutController extends Controller
     {
         $this->requireLogin();
         $orders = new OrderRepository();
-        $order = $orders->find($id) ?? throw HttpException::notFound();
+        $order = $orders->find($this->routeId($id)) ?? throw HttpException::notFound();
 
         return $this->view('checkout/confirmation', [
             'title' => 'Commande confirmée',

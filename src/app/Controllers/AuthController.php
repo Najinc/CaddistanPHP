@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\Response;
 use App\Core\Session;
+use App\Core\Validator;
 use App\Repositories\UserRepository;
 
 final class AuthController extends Controller
@@ -20,8 +21,10 @@ final class AuthController extends Controller
 
     public function login(): Response
     {
-        $email = $this->request->string('email');
-        $password = (string) $this->request->input('password', '');
+        $v = $this->validator();
+        $email    = $v->email('email', "L'e-mail");
+        $password = $v->password('password', 'Le mot de passe', 1, 72);
+        $v->validate();
 
         if (!Auth::attempt($email, $password)) {
             Session::flashInput(['email' => $email]);
@@ -46,23 +49,22 @@ final class AuthController extends Controller
     public function register(): Response
     {
         $users = new UserRepository();
+
+        $v = $this->validator();
         $data = [
-            'first_name' => $this->request->string('first_name'),
-            'last_name'  => $this->request->string('last_name'),
-            'email'      => $this->request->string('email'),
+            'first_name' => $v->string('first_name', 'Le prénom', 1, 100, Validator::REGEX_NAME),
+            'last_name'  => $v->string('last_name', 'Le nom', 1, 100, Validator::REGEX_NAME),
+            'email'      => $v->email('email', "L'e-mail"),
         ];
-        $password = (string) $this->request->input('password', '');
-        $confirmation = (string) $this->request->input('password_confirmation', '');
+        $password = $v->password('password', 'Le mot de passe', 8, 72);
+        if ($password !== $this->request->input('password_confirmation')) {
+            $v->addError('password_confirmation', 'Les mots de passe ne correspondent pas.');
+        }
+        $v->validate();
 
-        $error = match (true) {
-            $password !== $confirmation                  => 'Les mots de passe ne correspondent pas.',
-            $users->findByEmail($data['email']) !== null => 'Un compte existe déjà avec cette adresse.',
-            default                                      => null,
-        };
-
-        if ($error !== null) {
+        if ($users->findByEmail($data['email']) !== null) {
             Session::flashInput($data);
-            Session::flash('error', $error);
+            Session::flash('error', 'Un compte existe déjà avec cette adresse.');
             return $this->redirect('/inscription');
         }
 

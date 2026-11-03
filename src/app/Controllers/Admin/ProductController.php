@@ -33,9 +33,9 @@ final class ProductController extends Controller
     public function store(): Response
     {
         $products = new ProductRepository();
+        $data = $this->formData($products);
 
         try {
-            $data = $this->formData($products);
             $data['image'] = $this->handleImage() ?? '/images/products/default.svg';
         } catch (RuntimeException $e) {
             return $this->back('/admin/produits/nouveau', $e->getMessage());
@@ -60,9 +60,9 @@ final class ProductController extends Controller
     {
         $products = new ProductRepository();
         $product = $this->findOrFail($id);
+        $data = $this->formData($products, $product['id']);
 
         try {
-            $data = $this->formData($products, $product['id']);
             $data['image'] = $this->handleImage() ?? $product['image'];
         } catch (RuntimeException $e) {
             return $this->back('/admin/produits/' . $product['id'] . '/modifier', $e->getMessage());
@@ -86,28 +86,47 @@ final class ProductController extends Controller
 
     private function findOrFail(string $id): array
     {
-        return (new ProductRepository())->find($id) ?? throw HttpException::notFound('Produit introuvable.');
+        return (new ProductRepository())->find($this->routeId($id)) ?? throw HttpException::notFound('Produit introuvable.');
     }
 
-    /** Récupère les champs du formulaire produit. */
-    private function formData(ProductRepository $products, $exceptId = null): array
+    /** Récupère et valide les champs du formulaire produit. */
+    private function formData(ProductRepository $products, ?int $exceptId = null): array
     {
-        $name = $this->request->string('name');
-        $slug = slugify($this->request->string('slug') ?: $name);
+        $categoryIds = array_map('intval', array_column((new CategoryRepository())->all(), 'id'));
 
-        if ($products->slugExists($slug, $exceptId)) {
-            throw new RuntimeException('Ce slug est déjà utilisé.');
+        $v = $this->validator();
+        $categoryId = $v->int('category_id', 'La catégorie', 1, PHP_INT_MAX);
+        $name       = $v->string('name', 'Le nom', 2, 150);
+        $slugInput  = $v->string('slug', 'Le slug', 1, 170, required: false);
+        $short      = $v->string('short_description', 'La description courte', 0, 255, required: false) ?? '';
+        $long       = $v->string('description', 'La description', 0, 5000, required: false) ?? '';
+        $price      = $v->string('price', 'Le prix', 1, 10, '/^[0-9]{1,7}([.,][0-9]{1,2})?$/');
+        $stock      = $v->int('stock', 'Le stock', 0, 100000);
+        $isActive   = $v->bool('is_active');
+
+        // Liste blanche : la catégorie doit exister
+        if ($categoryId !== null && !in_array($categoryId, $categoryIds, true)) {
+            $v->addError('category_id', "Cette catégorie n'existe pas.");
         }
 
+        $slug = slugify($slugInput ?? $name ?? '');
+        if ($slug === '') {
+            $v->addError('slug', 'Le slug est invalide.');
+        } elseif ($products->slugExists($slug, $exceptId)) {
+            $v->addError('slug', 'Ce slug est déjà utilisé.');
+        }
+
+        $v->validate();
+
         return [
-            'category_id'       => $this->request->input('category_id'),
+            'category_id'       => $categoryId,
             'name'              => $name,
             'slug'              => $slug,
-            'short_description' => $this->request->string('short_description'),
-            'description'       => $this->request->string('description'),
-            'price_cents'       => (int) round((float) str_replace(',', '.', $this->request->string('price')) * 100),
-            'stock'             => $this->request->input('stock', 0),
-            'is_active'         => $this->request->input('is_active') ? 1 : 0,
+            'short_description' => $short,
+            'description'       => $long,
+            'price_cents'       => (int) round((float) str_replace(',', '.', $price) * 100),
+            'stock'             => $stock,
+            'is_active'         => $isActive ? 1 : 0,
         ];
     }
 
