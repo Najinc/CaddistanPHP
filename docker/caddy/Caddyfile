@@ -1,0 +1,25 @@
+{$DOMAIN} {
+    tls internal
+    encode zstd gzip
+
+    root * /var/www/public
+
+    respond /hot 404
+
+    # Websocket Vite (HMR)
+    @vite_ws header Upgrade websocket
+    handle @vite_ws {
+        reverse_proxy vite:{$VITE_PORT}
+    }
+
+    @vite_assets path /@vite/* /@id/* /@fs/* /resources/* /node_modules/* /src/*
+    handle @vite_assets {
+        reverse_proxy vite:{$VITE_PORT}
+    }
+
+    handle {
+        # Port par défaut PHP-FPM
+        php_fastcgi app:9000
+        file_server
+    }
+}

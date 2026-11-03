@@ -1,0 +1,6 @@
+.env
+/src/.env
+/src/vendor/
+/src/node_modules/
+/src/public/dist/
+/src/public/hot

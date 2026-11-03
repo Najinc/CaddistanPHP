@@ -1,0 +1,52 @@
+services:
+  app:
+    image: secuweb-app
+    build:
+      context: .
+      args:
+        user: ${USER:-app}
+        uid: ${UID:-1000}
+    container_name: secuweb-app
+    restart: unless-stopped
+    environment:
+      - APP_URL=${APP_URL}
+    volumes:
+      - ./src:/var/www
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/99-custom.ini:ro
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: secuweb-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${PROXY_DOMAIN}
+      - VITE_PORT=${VITE_PORT}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./src:/var/www:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+  vite:
+    image: secuweb-app
+    container_name: secuweb-vite
+    environment:
+      - DOMAIN=${PROXY_DOMAIN}
+      - VITE_PORT=${VITE_PORT}
+      - APP_URL=${APP_URL}
+    profiles: [dev]
+    restart: unless-stopped
+    command: npm run dev
+    depends_on:
+      - app
+    volumes:
+      - ./src:/var/www
+
+volumes:
+  caddy-data:
+  caddy-config:
