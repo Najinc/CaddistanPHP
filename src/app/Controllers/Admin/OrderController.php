@@ -12,7 +12,9 @@ final class OrderController extends Controller
 {
     public function index(): Response
     {
-        $status = $this->request->query('statut') ?: null;
+        $v = $this->queryValidator();
+        $status = $v->in('statut', 'Le statut', OrderRepository::STATUSES, required: false);
+        $v->validate();
 
         return $this->view('admin/orders/index', [
             'title'    => 'Commandes',
@@ -25,7 +27,7 @@ final class OrderController extends Controller
     public function show(string $id): Response
     {
         $orders = new OrderRepository();
-        $order = $orders->find($id) ?? throw HttpException::notFound('Commande introuvable.');
+        $order = $orders->find($this->routeId($id)) ?? throw HttpException::notFound('Commande introuvable.');
 
         return $this->view('admin/orders/show', [
             'title'    => 'Commande n°' . $order['id'],
@@ -38,8 +40,10 @@ final class OrderController extends Controller
     public function updateStatus(string $id): Response
     {
         $orders = new OrderRepository();
-        $order = $orders->find($id) ?? throw HttpException::notFound('Commande introuvable.');
-        $status = $this->request->string('status');
+        $order = $orders->find($this->routeId($id)) ?? throw HttpException::notFound('Commande introuvable.');
+        $v = $this->validator();
+        $status = $v->in('status', 'Le statut', OrderRepository::STATUSES);
+        $v->validate();
 
         $orders->updateStatus($order['id'], $status);
         Session::flash('success', 'Statut mis à jour : ' . order_status_label($status) . '.');

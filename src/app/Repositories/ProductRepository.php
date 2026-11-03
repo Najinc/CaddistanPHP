@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 final class ProductRepository extends Repository
 {
-    private const SORTS = [
+    public const SORTS = [
         'recent'    => 'p.created_at DESC, p.id DESC',
         'prix-asc'  => 'p.price_cents ASC',
         'prix-desc' => 'p.price_cents DESC',
