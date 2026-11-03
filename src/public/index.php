@@ -16,6 +16,10 @@ use App\Core\View;
 
 require __DIR__ . '/../vendor/autoload.php';
 
+// Variables lues depuis le .env (à la racine du projet, hors webroot, ignoré par git, injecté par Docker Compose).
+// Si l'une manque, on s'arrête tout de suite plutôt que de tourner avec une config bancale.
+require_env(['APP_URL', 'DB_HOST', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD']);
+
 Session::start();
 
 $request = Request::fromGlobals();

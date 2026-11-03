@@ -22,6 +22,22 @@ function env(string $key, mixed $default = null): mixed
 }
 
 /**
+ * Bloque l'application au démarrage si une variable obligatoire (secret, config) est absente ou vide.
+ * Le détail part dans les logs serveur, le visiteur ne voit qu'un message générique.
+ */
+function require_env(array $keys): void
+{
+    $missing = array_filter($keys, fn (string $key) => in_array(env($key), [null, ''], true));
+
+    if ($missing !== []) {
+        error_log('Configuration incomplète, variable(s) manquante(s) : ' . implode(', ', $missing));
+        http_response_code(500);
+        header('Content-Type: text/plain; charset=UTF-8');
+        exit('Application mal configurée.');
+    }
+}
+
+/**
  * Échappe une valeur pour l'afficher dans du HTML (contenu ou attribut entre guillemets).
  * ENT_QUOTES : échappe " ET ' (sinon on peut sortir d'un attribut value='...').
  * ENT_SUBSTITUTE : une séquence UTF-8 invalide est remplacée au lieu de vider toute la chaîne.
