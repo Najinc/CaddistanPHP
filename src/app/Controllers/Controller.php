@@ -7,6 +7,7 @@ use App\Core\HttpException;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
+use App\Core\Validator;
 use App\Core\View;
 
 /**
@@ -43,6 +44,32 @@ abstract class Controller
         Session::flashInput($this->request->all());
 
         return Response::redirect($this->request->header('Referer') ?? $fallback);
+    }
+
+    /** Validator sur les données POST. */
+    protected function validator(): Validator
+    {
+        return new Validator($this->request->all());
+    }
+
+    /** Validator sur la query string (GET). */
+    protected function queryValidator(): Validator
+    {
+        return new Validator($this->request->allQuery());
+    }
+
+    /** Paramètre de route {id} : entier positif strict, sinon 404 (/commandes/abc, /commandes/1 OR 1=1…). */
+    protected function routeId(string $id): int
+    {
+        $int = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        return $int !== false ? $int : throw HttpException::notFound();
+    }
+
+    /** Paramètre de route {slug} : lettres minuscules, chiffres et tirets uniquement, sinon 404. */
+    protected function routeSlug(string $slug): string
+    {
+        return preg_match('/^[a-z0-9-]{1,170}$/', $slug) ? $slug : throw HttpException::notFound();
     }
 
     protected function requireLogin(): void

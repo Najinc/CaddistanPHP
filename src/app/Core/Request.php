@@ -31,22 +31,57 @@ final class Request
         );
     }
 
-    public function query(string $key, mixed $default = null): mixed
+    /**
+     * Paramètre GET sous forme de chaîne.
+     * PHP transforme ?id[]=1 en tableau : on le refuse (400) au lieu de le laisser passer
+     * dans le code qui attend une chaîne (warnings, contournement de comparaisons, erreurs SQL…).
+     */
+    public function query(string $key, ?string $default = null): ?string
     {
-        return $this->query[$key] ?? $default;
+        return self::scalar($this->query, $key, $default);
     }
 
-    public function input(string $key, mixed $default = null): mixed
+    /** Paramètre POST sous forme de chaîne (tableau refusé, cf. query()). */
+    public function input(string $key, ?string $default = null): ?string
     {
-        return $this->body[$key] ?? $default;
+        return self::scalar($this->body, $key, $default);
     }
 
-    /** Valeur POST convertie en chaîne et nettoyée des espaces. */
+    /** Valeur POST nettoyée des espaces. */
     public function string(string $key, string $default = ''): string
     {
-        $value = $this->body[$key] ?? $default;
+        return trim($this->input($key) ?? $default);
+    }
 
-        return is_string($value) ? trim($value) : $default;
+    /** Seul cas où l'on accepte un tableau : quand on le demande explicitement (ex : quantities[12]=3). */
+    public function inputArray(string $key): array
+    {
+        $value = $this->body[$key] ?? [];
+
+        if (!is_array($value)) {
+            throw HttpException::badRequest("Le champ « $key » doit être une liste.");
+        }
+
+        return $value;
+    }
+
+    private static function scalar(array $source, string $key, ?string $default): ?string
+    {
+        if (!array_key_exists($key, $source)) {
+            return $default;
+        }
+
+        if (is_array($source[$key])) {
+            throw HttpException::badRequest("Le paramètre « $key » doit être une valeur simple.");
+        }
+
+        return (string) $source[$key];
+    }
+
+    /** Tous les paramètres GET (pour le Validator). */
+    public function allQuery(): array
+    {
+        return $this->query;
     }
 
     public function all(): array

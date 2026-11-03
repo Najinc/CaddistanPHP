@@ -8,20 +8,20 @@ use App\Vite;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= ($title ?? '') !== '' ? $title . ' · Caddistan' : 'Caddistan' ?></title>
+    <title>{{ ($title ?? '') !== '' ? $title . ' · Caddistan' : 'Caddistan' }}</title>
     <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
-    <?= Vite::vite('resources/main.ts') ?>
+    {!! Vite::vite('resources/main.ts') !!}
 </head>
 <body>
-    <?= partial('header') ?>
+    {!! partial('header') !!}
 
     <main class="flex-1 py-8">
         <div class="container-page">
-            <?= partial('flash', ['flashes' => Session::pullFlashes()]) ?>
-            <?= $content ?>
+            {!! partial('flash', ['flashes' => Session::pullFlashes()]) !!}
+            {!! $content !!}
         </div>
     </main>
 
-    <?= partial('footer') ?>
+    {!! partial('footer') !!}
 </body>
 </html>

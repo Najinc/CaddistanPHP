@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\HttpException;
 use App\Core\Response;
 use App\Core\Session;
+use App\Core\Validator;
 use App\Repositories\ProductRepository;
 use App\Services\Cart;
 
@@ -17,8 +18,10 @@ final class CartController extends Controller
 
     public function add(): Response
     {
-        $productId = $this->request->input('product_id');
-        $quantity  = (int) $this->request->input('quantity', 1);
+        $v = $this->validator();
+        $productId = $v->int('product_id', 'Le produit', 1, PHP_INT_MAX);
+        $quantity  = $v->int('quantity', 'La quantité', 1, Cart::MAX_QUANTITY, required: false) ?? 1;
+        $v->validate();
 
         $product = (new ProductRepository())->find($productId);
         if ($product === null || !$product['is_active']) {
@@ -38,12 +41,22 @@ final class CartController extends Controller
 
     public function update(): Response
     {
-        $quantities = $this->request->input('quantities', []);
+        // Ici un tableau est attendu (quantities[ID_PRODUIT]=QUANTITÉ) : on le demande explicitement
+        $quantities = $this->request->inputArray('quantities');
+        $v = new Validator($quantities);
+        $clean = [];
 
-        if (is_array($quantities)) {
-            foreach ($quantities as $productId => $quantity) {
-                Cart::update((int) $productId, (int) $quantity);
+        foreach (array_keys($quantities) as $productId) {
+            $id = filter_var($productId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($id === false) {
+                throw HttpException::badRequest('Identifiant de produit invalide.');
             }
+            $clean[$id] = $v->int((string) $productId, 'La quantité', 0, Cart::MAX_QUANTITY);
+        }
+        $v->validate();
+
+        foreach ($clean as $productId => $quantity) {
+            Cart::update($productId, $quantity);
         }
 
         Session::flash('success', 'Panier mis à jour.');
@@ -53,7 +66,11 @@ final class CartController extends Controller
 
     public function remove(): Response
     {
-        Cart::remove((int) $this->request->input('product_id'));
+        $v = $this->validator();
+        $productId = $v->int('product_id', 'Le produit', 1, PHP_INT_MAX);
+        $v->validate();
+
+        Cart::remove($productId);
         Session::flash('success', 'Article retiré du panier.');
 
         return $this->redirect('/panier');
