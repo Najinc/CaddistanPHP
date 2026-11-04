@@ -7,10 +7,13 @@ use RuntimeException;
 
 /**
  * Enregistrement des images produits : upload depuis le poste ou import depuis une URL.
- * Les fichiers sont stockés dans public/uploads/products/.
  */
 final class ProductImageService
 {
+    /** Upload depuis le poste : stocké HORS du webroot (storage/), servi uniquement par MediaController. */
+    public const STORAGE_DIR = __DIR__ . '/../../storage/uploads/products/';
+    private const MEDIA_URL = '/media/produits/';
+
     /** Taille maximale d'une image : 2 Mo. */
     public const MAX_SIZE = 2 * 1024 * 1024;
 
@@ -21,6 +24,7 @@ final class ProductImageService
         'image/webp' => 'webp',
     ];
 
+    /** Import par URL (non concerné par l'upload, cf. partie anti-SSRF). */
     private const UPLOAD_DIR = __DIR__ . '/../../public/uploads/products/';
     private const PUBLIC_PATH = '/uploads/products/';
 
@@ -59,11 +63,14 @@ final class ProductImageService
         // 4. Nom aléatoire (32 caractères hexa) + extension déduite du type réel, jamais du nom envoyé
         $filename = bin2hex(random_bytes(16)) . '.' . $extension;
 
-        if (!move_uploaded_file($tmp, self::UPLOAD_DIR . $filename)) {
+        if (!is_dir(self::STORAGE_DIR)) {
+            mkdir(self::STORAGE_DIR, 0775, true);
+        }
+        if (!move_uploaded_file($tmp, self::STORAGE_DIR . $filename)) {
             throw new RuntimeException('Impossible d\'enregistrer le fichier.');
         }
 
-        return self::PUBLIC_PATH . $filename;
+        return self::MEDIA_URL . $filename;
     }
 
     /** Télécharge une image distante et l'enregistre localement. */

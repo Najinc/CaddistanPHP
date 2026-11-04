@@ -12,6 +12,7 @@ use App\Controllers\CartController;
 use App\Controllers\CheckoutController;
 use App\Controllers\DocumentController;
 use App\Controllers\HomeController;
+use App\Controllers\MediaController;
 use App\Controllers\ProductController;
 use App\Controllers\ReviewController;
 use App\Controllers\TrackingController;
@@ -25,6 +26,7 @@ $router->get('/produits', [ProductController::class, 'index']);
 $router->get('/produits/{slug}', [ProductController::class, 'show']);
 $router->post('/produits/{slug}/avis', [ReviewController::class, 'store']);
 $router->get('/documents/{filename}', [DocumentController::class, 'download']);
+$router->get('/media/produits/{filename}', [MediaController::class, 'product']);
 
 // Panier & commande
 $router->get('/panier', [CartController::class, 'index']);
