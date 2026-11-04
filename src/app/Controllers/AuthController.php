@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Auth\Authenticator;
+use App\Auth\SafeRedirect;
 use App\Core\Auth;
 use App\Core\Response;
 use App\Core\Session;
@@ -28,7 +30,8 @@ final class AuthController extends Controller
 
         if (!Auth::attempt($email, $password)) {
             Session::flashInput(['email' => $email]);
-            Session::flash('error', 'Identifiants incorrects.');
+            // Même message que l'e-mail existe ou non : on ne révèle pas quels comptes existent.
+            Session::flash('error', Authenticator::FAILURE_MESSAGE);
             return $this->redirect('/connexion');
         }
 
@@ -84,10 +87,10 @@ final class AuthController extends Controller
         return $this->redirect('/');
     }
 
-    /** Redirige vers la page demandée avant la connexion. */
+    /** Redirige vers la page demandée avant la connexion, uniquement si c'est une page du site (anti open redirect). */
     private function redirectIntended(): Response
     {
-        $target = Session::get('intended', '/compte');
+        $target = SafeRedirect::target(Session::get('intended'), '/compte');
         Session::forget('intended');
 
         return $this->redirect($target);
