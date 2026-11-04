@@ -21,6 +21,11 @@ function initLiveSearch(): void {
             const response = await fetch(`/api/produits?q=${encodeURIComponent(q)}`, {
                 headers: { Accept: 'application/json' },
             });
+            // 429 (trop de requêtes), 422… : pas de résultats à afficher, on attend la prochaine frappe.
+            if (!response.ok) {
+                results.classList.add('hidden');
+                return;
+            }
             const { data } = (await response.json()) as {
                 data: { name: string; price: string; image: string; category: string; url: string }[];
             };
@@ -65,7 +70,7 @@ function initAddToCart(): void {
             }
 
             if (button) {
-                button.textContent = 'Ajouté ✓';
+                button.textContent = response.ok ? 'Ajouté ✓' : 'Erreur, réessayez';
                 window.setTimeout(() => {
                     button.textContent = 'Ajouter';
                     button.removeAttribute('disabled');

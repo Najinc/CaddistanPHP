@@ -9,7 +9,8 @@ use App\Core\Session;
 use App\Core\Validator;
 use App\Repositories\OrderRepository;
 use App\Services\Cart;
-use RuntimeException;
+use App\Services\OrderException;
+use App\Services\OrderPlacement;
 
 final class CheckoutController extends Controller
 {
@@ -45,9 +46,12 @@ final class CheckoutController extends Controller
         ];
         $v->validate();
 
+        // Seuls les identifiants et quantités du panier sont transmis : prix et total sont recalculés
+        // depuis la base, dans la transaction. On n'attrape que les erreurs métier (OrderException) :
+        // une PDOException (qui hérite aussi de RuntimeException) afficherait du SQL au client.
         try {
-            $orderId = (new OrderRepository())->create(Auth::id(), $shipping, $cart['lines']);
-        } catch (RuntimeException $e) {
+            $orderId = (new OrderPlacement())->place(Auth::id(), $shipping, Cart::raw());
+        } catch (OrderException $e) {
             return $this->back('/commande', $e->getMessage());
         }
 

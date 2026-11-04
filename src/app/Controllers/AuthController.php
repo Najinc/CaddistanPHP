@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Auth\Authenticator;
 use App\Auth\SafeRedirect;
 use App\Core\Auth;
+use App\Core\Logger;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\Validator;
@@ -29,12 +30,15 @@ final class AuthController extends Controller
         $v->validate();
 
         if (!Auth::attempt($email, $password)) {
+            // Partie 5 : e-mail et IP uniquement, jamais le mot de passe.
+            Logger::security('auth.login_failed', ['email' => $email]);
             Session::flashInput(['email' => $email]);
             // Même message que l'e-mail existe ou non.
             Session::flash('error', Authenticator::FAILURE_MESSAGE);
             return $this->redirect('/connexion');
         }
 
+        Logger::security('auth.login_succeeded', ['email' => $email], 'info');
         Session::flash('success', 'Bon retour parmi nous, ' . Auth::user()['first_name'] . ' !');
 
         return $this->redirectIntended();
