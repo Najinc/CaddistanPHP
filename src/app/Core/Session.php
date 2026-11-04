@@ -2,16 +2,33 @@
 
 namespace App\Core;
 
+use App\Auth\Session\NativeSession;
+
 /**
  * Accès à la session PHP + messages flash.
+ *
+ * Démarrage, régénération et destruction passent par NativeSession (Partie 3) :
+ * cookie HttpOnly, Secure, SameSite=Lax et préfixé __Host-, use_strict_mode, timeout d'inactivité.
  */
 final class Session
 {
+    private static ?NativeSession $native = null;
+
+    /** Cookie Secure dès que le site est servi en HTTPS (toujours le cas derrière Caddy). */
+    public static function native(): NativeSession
+    {
+        return self::$native ??= new NativeSession(secure: str_starts_with((string) env('APP_URL', ''), 'https://'));
+    }
+
     public static function start(): void
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
+        self::native()->start();
+    }
+
+    /** Nouvel identifiant de session, l'ancien est supprimé côté serveur. */
+    public static function regenerate(): void
+    {
+        self::native()->regenerate();
     }
 
     public static function get(string $key, mixed $default = null): mixed
@@ -29,10 +46,10 @@ final class Session
         unset($_SESSION[$key]);
     }
 
+    /** Destruction complète : données, session côté serveur et cookie. */
     public static function destroy(): void
     {
-        $_SESSION = [];
-        session_destroy();
+        self::native()->destroy();
     }
 
     public static function flash(string $type, string $message): void
