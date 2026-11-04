@@ -19,13 +19,20 @@ class Response
         return new self($html, $status, ['Content-Type' => 'text/html; charset=UTF-8']);
     }
 
+    /**
+     * Réponse JSON sécurisée :
+     *  - JSON_HEX_TAG / JSON_HEX_AMP (+ APOS / QUOT) : < > & ' " sont encodés en \u003C, \u0026…
+     *    => même si le JSON finit dans une page HTML, il ne peut pas fermer une balise <script>.
+     *  - JSON_THROW_ON_ERROR : une donnée non encodable lève une exception au lieu de renvoyer
+     *    silencieusement `false` (réponse vide avec un code 200).
+     *  - Content-Type explicite avec charset : le navigateur n'a rien à deviner.
+     */
     public static function json(mixed $data, int $status = 200): self
     {
-        return new self(
-            json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
-            $status,
-            ['Content-Type' => 'application/json; charset=UTF-8'],
-        );
+        $flags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+               | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR;
+
+        return new self(json_encode($data, $flags), $status, ['Content-Type' => 'application/json; charset=UTF-8']);
     }
 
     public static function redirect(string $url, int $status = 302): self

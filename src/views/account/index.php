@@ -15,12 +15,12 @@
                     <tbody>
                         <?php foreach ($orders as $order): ?>
                             <tr>
-                                <td class="font-semibold">#<?= (int) $order['id'] ?></td>
-                                <td><?= date('d/m/Y', strtotime($order['created_at'])) ?></td>
-                                <td><?= (int) $order['items_count'] ?></td>
-                                <td><?= money((int) $order['total_cents']) ?></td>
-                                <td><?= partial('order-status', ['status' => $order['status']]) ?></td>
-                                <td class="text-right"><a href="/compte/commandes/<?= (int) $order['id'] ?>" class="btn-link">Détails</a></td>
+                                <td class="font-semibold">#{{ (int) $order['id'] }}</td>
+                                <td>{{ date('d/m/Y', strtotime($order['created_at'])) }}</td>
+                                <td>{{ (int) $order['items_count'] }}</td>
+                                <td>{{ money((int) $order['total_cents']) }}</td>
+                                <td>{!! partial('order-status', ['status' => $order['status']]) !!}</td>
+                                <td class="text-right"><a href="/compte/commandes/{{ (int) $order['id'] }}" class="btn-link">Détails</a></td>
                             </tr>
                         <?php endforeach ?>
                     </tbody>
@@ -31,15 +31,15 @@
 
     <section class="card h-fit p-6">
         <h2 class="text-lg">Mes informations</h2>
-        <p class="mt-1 text-sm text-slate-500"><?= $user['email'] ?></p>
+        <p class="mt-1 text-sm text-slate-500">{{ $user['email'] }}</p>
         <form action="/compte" method="post" class="mt-4 space-y-4">
             <div>
                 <label for="first_name" class="label">Prénom</label>
-                <input id="first_name" name="first_name" class="input" required value="<?= old('first_name', $user['first_name']) ?>">
+                <input id="first_name" name="first_name" class="input" required value="{{ old('first_name', $user['first_name']) }}">
             </div>
             <div>
                 <label for="last_name" class="label">Nom</label>
-                <input id="last_name" name="last_name" class="input" required value="<?= old('last_name', $user['last_name']) ?>">
+                <input id="last_name" name="last_name" class="input" required value="{{ old('last_name', $user['last_name']) }}">
             </div>
             <fieldset class="space-y-4 border-t border-slate-200 pt-4">
                 <legend class="text-sm font-semibold text-slate-700">Changer de mot de passe (optionnel)</legend>

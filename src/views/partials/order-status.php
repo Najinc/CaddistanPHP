@@ -8,4 +8,4 @@ $colors = [
     'cancelled' => 'bg-slate-200 text-slate-600',
 ];
 ?>
-<span class="badge <?= $colors[$status] ?? 'bg-slate-100' ?>"><?= order_status_label($status) ?></span>
+<span class="badge {{ $colors[$status] ?? 'bg-slate-100' }}">{{ order_status_label($status) }}</span>

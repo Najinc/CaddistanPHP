@@ -9,3 +9,5 @@
 /src/storage/logs/*
 !/src/storage/logs/.gitkeep
 .DS_Store
+/src/storage/cache/views/*
+!/src/storage/cache/views/.gitkeep
