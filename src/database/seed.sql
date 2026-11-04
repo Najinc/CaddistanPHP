@@ -1,10 +1,11 @@
 -- Données de démonstration
 -- Comptes : admin@caddistan.local / Admin123!   client@caddistan.local / Client123!
+-- Mots de passe stockés en Argon2id.
 SET NAMES utf8mb4;
 
 INSERT INTO users (email, password, first_name, last_name, role) VALUES
-('admin@caddistan.local',  'Admin123!', 'Alice', 'Admin', 'admin'),
-('client@caddistan.local', 'Client123!', 'Claude', 'Client', 'customer');
+('admin@caddistan.local',  '$argon2id$v=19$m=65536,t=4,p=1$OVkyQW40TkFQR3pDQmhRSA$pJPqy94gMc0i3IheYYPAUB/8+4Yih/Q08aOrfWXDA6k', 'Alice', 'Admin', 'admin'),
+('client@caddistan.local', '$argon2id$v=19$m=65536,t=4,p=1$QW1PUlhuR3h3ZlBUVS5KMA$B90fVpsCTD7sz8+Bcfx729l9pamgHdDz4Qyu37rnY18', 'Claude', 'Client', 'customer');
 
 INSERT INTO categories (id, name, slug, description) VALUES
 (1, 'Supermarché',           'supermarche', 'Chariots de magasin robustes, du 60 au 240 litres.'),

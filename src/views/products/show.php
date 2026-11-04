@@ -30,6 +30,7 @@
 
         <?php if ($product['stock'] > 0): ?>
             <form action="/panier/ajouter" method="post" class="mt-8 flex items-end gap-3">
+                {!! csrf_field() !!}
                 <input type="hidden" name="product_id" value="{{ (int) $product['id'] }}">
                 <div>
                     <label for="quantity" class="label">Quantité</label>
@@ -71,6 +72,7 @@
         <h3>Donner votre avis</h3>
         <?php if (auth()): ?>
             <form action="/produits/{{ $product['slug'] }}/avis" method="post" class="mt-4 space-y-4">
+                {!! csrf_field() !!}
                 <div>
                     <label for="rating" class="label">Note</label>
                     <select id="rating" name="rating" class="input" required>

@@ -9,6 +9,7 @@
 <?php else: ?>
     <div class="mt-6 grid gap-8 lg:grid-cols-[1fr_320px]">
         <form action="/panier/modifier" method="post" id="cart-form" class="card overflow-x-auto">
+            {!! csrf_field() !!}
             <table class="table">
                 <thead>
                     <tr>
@@ -49,6 +50,7 @@
 
         <?php foreach ($lines as $line): ?>
             <form action="/panier/retirer" method="post" id="remove-{{ (int) $line['product']['id'] }}" class="hidden">
+                {!! csrf_field() !!}
                 <input type="hidden" name="product_id" value="{{ (int) $line['product']['id'] }}">
             </form>
         <?php endforeach ?>

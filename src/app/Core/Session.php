@@ -2,16 +2,25 @@
 
 namespace App\Core;
 
+use App\Auth\Session\NativeSession;
+
 /**
  * Accès à la session PHP + messages flash.
+ * Démarrage et destruction passent par NativeSession (cookie sécurisé, timeout d'inactivité).
  */
 final class Session
 {
+    private static ?NativeSession $native = null;
+
+    public static function native(): NativeSession
+    {
+        // Cookie Secure dès que le site est en HTTPS.
+        return self::$native ??= new NativeSession(secure: str_starts_with((string) env('APP_URL', ''), 'https://'));
+    }
+
     public static function start(): void
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
+        self::native()->start();
     }
 
     public static function get(string $key, mixed $default = null): mixed
@@ -31,8 +40,7 @@ final class Session
 
     public static function destroy(): void
     {
-        $_SESSION = [];
-        session_destroy();
+        self::native()->destroy();
     }
 
     public static function flash(string $type, string $message): void

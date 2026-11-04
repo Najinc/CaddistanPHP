@@ -35,11 +35,12 @@ $cartCount = Cart::count();
             </a>
 
             <?php if (Auth::check()): ?>
-                <?php if (Auth::isAdmin()): ?>
+                <?php if (Auth::can('admin.dashboard')): ?>
                     <a href="/admin" class="nav-link {{ is_current('/admin') ? 'is-active' : '' }}">Admin</a>
                 <?php endif ?>
                 <a href="/compte" class="nav-link {{ is_current('/compte') ? 'is-active' : '' }}">{{ Auth::user()['first_name'] }}</a>
                 <form action="/deconnexion" method="post">
+                    {!! csrf_field() !!}
                     <button type="submit" class="nav-link cursor-pointer">Déconnexion</button>
                 </form>
             <?php else: ?>

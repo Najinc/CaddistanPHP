@@ -7,6 +7,7 @@
 
 declare(strict_types=1);
 
+use App\Auth\Csrf\CsrfTokenManager;
 use App\Core\Auth;
 use App\Core\Cache;
 use App\Core\ExceptionHandler;
@@ -23,7 +24,7 @@ $handler->register();
 
 // Variables lues depuis le .env (à la racine du projet, hors webroot, ignoré par git, injecté par Docker Compose).
 // Si l'une manque, on s'arrête tout de suite plutôt que de tourner avec une config bancale.
-require_env(['APP_URL', 'DB_HOST', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD']);
+require_env(['APP_URL', 'APP_KEY', 'DB_HOST', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD']);
 
 Session::start();
 
@@ -33,7 +34,11 @@ $throttle = new Throttle(new RateLimiter(new Cache()));
 
 try {
     $wasGuest = !Auth::check();
+    // Avant le CSRF : une rafale de requêtes sans token est comptée elle aussi.
     $throttle->before($request);            // 429 + Retry-After si la limite est dépassée
+    // Tout POST doit porter le token CSRF de la session, sinon 403.
+    Auth::csrf()->verify($request->method, $request->input(CsrfTokenManager::FIELD));
+
     $response = $router->dispatch($request);
     $throttle->after($request, $wasGuest);  // login réussi : remise à zéro du compteur du compte
 } catch (Throwable $e) {
