@@ -12,10 +12,8 @@ use App\Auth\PasswordHasher;
 use App\Auth\Signing\UrlSigner;
 
 /**
- * Utilisateur connecté et droits d'accès : point d'entrée de la Partie 3 pour le reste du site.
- *
- * Même API statique qu'avant (Auth::user(), Auth::check()…), mais toute la logique est dans app/Auth/ :
- * cette classe ne fait qu'assembler Authenticator, Gate, CsrfTokenManager et PasswordHasher.
+ * Utilisateur connecté et droits d'accès.
+ * Même API statique qu'avant, la logique est dans app/Auth/.
  */
 final class Auth
 {
@@ -25,25 +23,22 @@ final class Auth
     private static ?PasswordHasher $hasher = null;
     private static ?UrlSigner $signer = null;
 
-    /** Argon2id + même temps de réponse que l'e-mail existe ou non + nouvel ID de session si succès. */
     public static function attempt(string $email, #[\SensitiveParameter] string $password): bool
     {
         return self::authenticator()->attempt($email, $password);
     }
 
-    /** Connecte un utilisateur déjà vérifié (ex : juste après l'inscription). */
     public static function login(array $user): void
     {
         self::authenticator()->login(new UserRow($user));
     }
 
-    /** Destruction complète de la session (données, fichier serveur, cookie). */
     public static function logout(): void
     {
         self::authenticator()->logout();
     }
 
-    /** Nouvel ID de session et nouveau token CSRF, par exemple après un changement de mot de passe. */
+    /** Nouvel ID de session et nouveau token CSRF (ex : après un changement de mot de passe). */
     public static function renewSession(): void
     {
         $user = self::authenticator()->user();
@@ -53,7 +48,7 @@ final class Auth
         }
     }
 
-    /** Utilisateur connecté, SANS le hash du mot de passe : il n'a rien à faire dans les vues. */
+    /** Sans le hash du mot de passe : il n'a rien à faire dans les vues. */
     public static function user(): ?array
     {
         $user = self::authenticator()->user();
@@ -78,19 +73,19 @@ final class Auth
         return self::authenticator()->check();
     }
 
-    /** Pour adapter l'affichage (ex : lien « Admin »). Ne protège rien : la vérification se fait avec authorize(). */
+    /** Pour l'affichage seulement : la protection, c'est authorize() dans le contrôleur. */
     public static function can(string $permission): bool
     {
         return self::gate()->can(self::authenticator()->user(), $permission);
     }
 
-    /** 401 si personne n'est connecté, 403 s'il manque la permission (voir app/Auth/permissions.php). */
+    /** 401 si personne n'est connecté, 403 s'il manque la permission. */
     public static function authorize(string $permission): void
     {
         self::gate()->authorize(self::authenticator()->user(), $permission);
     }
 
-    /** 404 si la ligne (commande…) n'appartient pas à l'utilisateur connecté (colonne user_id). */
+    /** 404 si la ligne (colonne user_id) n'appartient pas à l'utilisateur connecté. */
     public static function authorizeOwner(array $row): void
     {
         self::gate()->authorizeOwnership(self::authenticator()->user(), new OwnedRow($row));
@@ -101,7 +96,7 @@ final class Auth
         return self::hasher()->hash($password);
     }
 
-    /** Vérifie le mot de passe de l'utilisateur connecté (ex : « mot de passe actuel »). */
+    /** Vérifie le mot de passe de l'utilisateur connecté. */
     public static function checkPassword(#[\SensitiveParameter] string $password): bool
     {
         $user = self::authenticator()->user();
@@ -114,7 +109,6 @@ final class Auth
         return self::$csrf ??= new CsrfTokenManager(Session::native());
     }
 
-    /** URL signées : HMAC-SHA256 avec APP_KEY (obligatoire au démarrage, voir public/index.php). */
     public static function signer(): UrlSigner
     {
         return self::$signer ??= new UrlSigner((string) env('APP_KEY'));

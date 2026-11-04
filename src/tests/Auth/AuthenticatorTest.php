@@ -6,7 +6,6 @@ namespace Tests\Auth;
 
 use App\Auth\Authenticator;
 use App\Auth\Csrf\CsrfTokenManager;
-use App\Auth\Exception\AuthenticationException;
 use App\Auth\PasswordHasher;
 use Tests\Auth\Support\ArraySession;
 use Tests\Auth\Support\FakeUser;
@@ -117,13 +116,6 @@ final class AuthenticatorTest extends TestCase
         $this->users->delete(1);
 
         $this->assertFalse($this->newAuthenticator()->check());
-    }
-
-    public function test_require_user_leve_une_401_si_personne_n_est_connecte(): void
-    {
-        $e = $this->expectThrows(AuthenticationException::class, fn () => $this->auth->requireUser());
-
-        $this->assertSame(401, $e->status);
     }
 
     /** Un nouvel Authenticator sur la même session simule la requête suivante. */

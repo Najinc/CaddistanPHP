@@ -73,7 +73,7 @@ final class GateTest extends TestCase
 
     public function test_un_client_voit_sa_propre_commande(): void
     {
-        $this->gate->authorizeOwnership($this->client, new FakeOrder(ownerId: 1), 'order.view_any');
+        $this->gate->authorizeOwnership($this->client, new FakeOrder(ownerId: 1));
         $this->assertTrue(true);
     }
 
@@ -81,22 +81,18 @@ final class GateTest extends TestCase
     {
         $e = $this->expectThrows(
             AccessDeniedException::class,
-            fn () => $this->gate->authorizeOwnership($this->otherClient, new FakeOrder(ownerId: 1), 'order.view_any'),
+            fn () => $this->gate->authorizeOwnership($this->otherClient, new FakeOrder(ownerId: 1)),
         );
 
         $this->assertSame(404, $e->status, 'on ne révèle pas que la commande existe');
         $this->assertSame('Page introuvable.', $e->getMessage());
     }
 
-    public function test_l_admin_voit_toutes_les_commandes_grace_a_order_view_any(): void
+    public function test_l_admin_passe_par_le_back_office_pas_par_la_propriete(): void
     {
-        $this->gate->authorizeOwnership($this->admin, new FakeOrder(ownerId: 1), 'order.view_any');
-        $this->assertTrue(true);
-    }
-
-    public function test_sans_permission_globale_l_admin_est_traite_comme_les_autres(): void
-    {
+        // Les commandes des clients se consultent dans /admin/commandes (permission order.view_any).
         $this->expectThrows(AccessDeniedException::class, fn () => $this->gate->authorizeOwnership($this->admin, new FakeOrder(ownerId: 1)));
+        $this->assertTrue($this->gate->can($this->admin, 'order.view_any'));
     }
 
     public function test_propriete_sans_utilisateur_401(): void

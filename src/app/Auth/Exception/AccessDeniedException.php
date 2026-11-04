@@ -14,15 +14,14 @@ final class AccessDeniedException extends HttpException
         parent::__construct($status, $message);
     }
 
-    /** 403 : il manque une permission. */
     public static function missingPermission(string $permission): self
     {
         return new self(403, 'Accès refusé.', 'permission manquante : ' . $permission);
     }
 
-    /** 404 : la ressource est à quelqu'un d'autre. On ne confirme pas qu'elle existe. */
-    public static function notOwner(string $reason): self
+    // 404 plutôt que 403 : on ne confirme pas que la ressource existe.
+    public static function notOwner(): self
     {
-        return new self(404, 'Page introuvable.', $reason);
+        return new self(404, 'Page introuvable.', "ressource d'un autre utilisateur");
     }
 }

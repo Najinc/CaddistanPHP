@@ -8,7 +8,7 @@ use App\Auth\Authenticatable;
 use App\Auth\Exception\InvalidSignatureException;
 use App\Auth\UserProviderInterface;
 
-/** Connexion sans mot de passe par un lien envoyé par email : URL signée, valable 15 minutes, utilisable une seule fois. */
+/** Connexion par un lien envoyé par email : URL signée, valable 15 minutes, utilisable une seule fois. */
 final class MagicLink
 {
     private const PATH = '/connexion/lien';
@@ -21,7 +21,6 @@ final class MagicLink
     ) {
     }
 
-    /** Chemin à envoyer par email, précédé de APP_URL. */
     public function create(Authenticatable $user): string
     {
         $nonce = bin2hex(random_bytes(16));
@@ -29,7 +28,6 @@ final class MagicLink
         return $this->signer->sign(self::PATH . '?user=' . $user->getAuthId() . '&nonce=' . $nonce, self::TTL);
     }
 
-    /** Vérifie le lien et le marque comme utilisé. Renvoie l'utilisateur à passer à Authenticator::login(). */
     public function consume(string $url): Authenticatable
     {
         $params = $this->signer->verify($url);

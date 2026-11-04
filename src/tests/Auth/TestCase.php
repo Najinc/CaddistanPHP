@@ -8,7 +8,7 @@ final class AssertionFailed extends \Exception
 {
 }
 
-/** Mini-framework de test (aucune dépendance) : on hérite et on écrit des méthodes test_*. */
+/** Chaque méthode test_* d'une classe fille est un test. */
 abstract class TestCase
 {
     public function setUp(): void

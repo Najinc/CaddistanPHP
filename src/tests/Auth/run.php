@@ -2,13 +2,7 @@
 
 declare(strict_types=1);
 
-/*
- * Tests de la Partie 3 (authentification et accès), sans dépendance externe.
- *
- * Depuis le dossier src/ (ou /var/www dans le conteneur) :
- *     composer dump-autoload
- *     php tests/Auth/run.php
- */
+// Depuis src/ : composer dump-autoload, puis php tests/Auth/run.php
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 require __DIR__ . '/TestCase.php';

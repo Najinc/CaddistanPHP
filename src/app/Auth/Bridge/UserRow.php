@@ -6,10 +6,9 @@ namespace App\Auth\Bridge;
 
 use App\Auth\Authenticatable;
 
-/** Ligne de la table users (tableau renvoyé par UserRepository), vue comme un Authenticatable. */
+/** Ligne de la table users (tableau) vue comme un Authenticatable. */
 final class UserRow implements Authenticatable
 {
-    /** @param array<string, mixed> $row */
     public function __construct(public readonly array $row)
     {
     }

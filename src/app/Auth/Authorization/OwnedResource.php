@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth\Authorization;
 
-/** Ressource qui appartient à un utilisateur, par exemple une commande (implémenté par la Partie 2). */
+/** Ressource qui appartient à un utilisateur (ex : une commande). */
 interface OwnedResource
 {
     public function getOwnerId(): int;

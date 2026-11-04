@@ -4,20 +4,15 @@ declare(strict_types=1);
 
 namespace App\Auth\Session;
 
-/** Session PHP sécurisée. Tout est réglé ici, on ne dépend pas du php.ini. */
+/** Session PHP configurée dans le code, sans dépendre du php.ini. */
 final class NativeSession implements SessionInterface
 {
     private const LAST_ACTIVITY = 'last_activity';
 
-    /**
-     * @param bool          $secure      false seulement en local sans HTTPS
-     * @param int           $idleTimeout secondes d'inactivité avant la déconnexion
-     * @param \Closure|null $clock       horloge remplaçable dans les tests
-     */
     public function __construct(
-        private readonly bool $secure = true,
-        private readonly int $idleTimeout = 1800,
-        private readonly ?\Closure $clock = null,
+        private readonly bool $secure = true,       // false seulement en local sans HTTPS
+        private readonly int $idleTimeout = 1800,   // en secondes
+        private readonly ?\Closure $clock = null,   // horloge remplaçable dans les tests
     ) {
     }
 
@@ -29,7 +24,7 @@ final class NativeSession implements SessionInterface
 
         $this->open();
 
-        // Inactif trop longtemps : on détruit la session et on repart sur une session vierge.
+        // Trop longtemps inactif : on repart sur une session vierge.
         $lastActivity = $_SESSION[self::LAST_ACTIVITY] ?? null;
         if (is_int($lastActivity) && $this->now() - $lastActivity > $this->idleTimeout) {
             $this->destroy();
@@ -52,16 +47,10 @@ final class NativeSession implements SessionInterface
         $_SESSION[$key] = $value;
     }
 
-    public function remove(string $key): void
-    {
-        $this->start();
-        unset($_SESSION[$key]);
-    }
-
     public function regenerate(): void
     {
         $this->start();
-        session_regenerate_id(true); // true : l'ancienne session est supprimée sur le serveur
+        session_regenerate_id(true); // true : supprime l'ancienne session sur le serveur
     }
 
     public function destroy(): void
@@ -70,13 +59,13 @@ final class NativeSession implements SessionInterface
         $_SESSION = [];
         session_destroy();
 
-        // Supprime le cookie : mêmes attributs et date passée, sinon le navigateur l'ignore.
+        // Mêmes attributs que le cookie d'origine, sinon le navigateur ne le supprime pas.
         setcookie(session_name(), '', ['expires' => 1] + $this->cookieOptions());
     }
 
     private function open(): void
     {
-        // Préfixe __Host- : le navigateur refuse le cookie s'il n'est pas Secure ou s'il vise un sous-domaine.
+        // __Host- : le navigateur refuse le cookie s'il n'est pas Secure ou s'il vise un sous-domaine.
         session_name(($this->secure ? '__Host-' : '') . 'caddistan_session');
         session_set_cookie_params(['lifetime' => 0] + $this->cookieOptions());
         session_start([
@@ -85,7 +74,7 @@ final class NativeSession implements SessionInterface
         ]);
     }
 
-    /** HttpOnly : illisible en JavaScript. Secure : HTTPS uniquement. SameSite=Lax : pas envoyé sur un POST venant d'un autre site. */
+    // HttpOnly : illisible en JS. Secure : HTTPS seulement. Lax : pas envoyé sur un POST venant d'un autre site.
     private function cookieOptions(): array
     {
         return ['path' => '/', 'secure' => $this->secure, 'httponly' => true, 'samesite' => 'Lax'];
