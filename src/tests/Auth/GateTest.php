@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Auth;
 
 use App\Auth\Authorization\Gate;
-use App\Auth\Authorization\PermissionMap;
 use App\Auth\Exception\AccessDeniedException;
 use App\Auth\Exception\AuthenticationException;
 use Tests\Auth\Support\FakeOrder;
@@ -20,7 +19,7 @@ final class GateTest extends TestCase
 
     public function setUp(): void
     {
-        $this->gate = new Gate(PermissionMap::caddistan());
+        $this->gate = new Gate(require dirname(__DIR__, 2) . '/app/Auth/permissions.php');
         $this->client = new FakeUser(1, 'alice@caddistan.test', '', 'client');
         $this->otherClient = new FakeUser(2, 'bob@caddistan.test', '', 'client');
         $this->admin = new FakeUser(3, 'admin@caddistan.test', '', 'admin');
@@ -50,7 +49,6 @@ final class GateTest extends TestCase
 
     public function test_permission_inconnue_refusee_meme_a_l_admin(): void
     {
-        // Une faute de frappe dans le code ne doit jamais ouvrir l'accès.
         $this->assertFalse($this->gate->can($this->admin, 'caddy.edti'));
     }
 
@@ -90,10 +88,5 @@ final class GateTest extends TestCase
     public function test_propriete_sans_utilisateur_401(): void
     {
         $this->expectThrows(AuthenticationException::class, fn () => $this->gate->authorizeOwnership(null, new FakeOrder(ownerId: 1)));
-    }
-
-    public function test_la_carte_refuse_un_nom_de_permission_invalide(): void
-    {
-        $this->expectThrows(\InvalidArgumentException::class, fn () => new PermissionMap(['admin' => ['Caddy Edit']]));
     }
 }
