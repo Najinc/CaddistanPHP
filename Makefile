@@ -3,7 +3,7 @@ CERT_SRC  := caddy:/data/caddy/pki/authorities/local/root.crt
 TMP_CERT  := /tmp/$(CERT_NAME)
 HOSTS_FILE := /etc/hosts
 
-.PHONY: setup install_cert install_host dev stop stop_dev sh cp_env install_dependencies build_app db_shell db_reset
+.PHONY: setup install_cert install_host dev stop stop_dev sh cp_env app_key install_dependencies build_app db_shell db_reset
 
 setup: cp_env
 	$(MAKE) dev
@@ -14,6 +14,13 @@ setup: cp_env
 
 cp_env:
 	cp .env.example .env
+	$(MAKE) app_key
+
+# Génère une APP_KEY aléatoire dans le .env (clé HMAC des URL signées, Partie 3)
+app_key:
+	@key=$$(openssl rand -base64 32) && \
+	sed -i.bak "s|^APP_KEY=.*|APP_KEY=\"$$key\"|" .env && rm -f .env.bak && \
+	echo "APP_KEY générée dans .env"
 
 build:
 	docker compose exec app npm run build

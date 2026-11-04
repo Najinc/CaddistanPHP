@@ -9,6 +9,7 @@ use App\Auth\Bridge\RepositoryUserProvider;
 use App\Auth\Bridge\UserRow;
 use App\Auth\Csrf\CsrfTokenManager;
 use App\Auth\PasswordHasher;
+use App\Auth\Signing\UrlSigner;
 
 /**
  * Utilisateur connecté et droits d'accès : point d'entrée de la Partie 3 pour le reste du site.
@@ -22,6 +23,7 @@ final class Auth
     private static ?Gate $gate = null;
     private static ?CsrfTokenManager $csrf = null;
     private static ?PasswordHasher $hasher = null;
+    private static ?UrlSigner $signer = null;
 
     /** Argon2id + même temps de réponse que l'e-mail existe ou non + nouvel ID de session si succès. */
     public static function attempt(string $email, #[\SensitiveParameter] string $password): bool
@@ -110,6 +112,12 @@ final class Auth
     public static function csrf(): CsrfTokenManager
     {
         return self::$csrf ??= new CsrfTokenManager(Session::native());
+    }
+
+    /** URL signées : HMAC-SHA256 avec APP_KEY (obligatoire au démarrage, voir public/index.php). */
+    public static function signer(): UrlSigner
+    {
+        return self::$signer ??= new UrlSigner((string) env('APP_KEY'));
     }
 
     private static function authenticator(): Authenticator

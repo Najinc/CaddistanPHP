@@ -62,9 +62,10 @@ final class AccountController extends Controller
         Auth::authorizeOwner($order);
 
         return $this->view('account/order', [
-            'title' => 'Commande n°' . $order['id'],
-            'order' => $order,
-            'items' => $orders->items($order['id']),
+            'title'       => 'Commande n°' . $order['id'],
+            'order'       => $order,
+            'items'       => $orders->items($order['id']),
+            'trackingUrl' => TrackingController::linkFor((int) $order['id']),
         ]);
     }
 }
