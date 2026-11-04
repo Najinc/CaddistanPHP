@@ -71,7 +71,7 @@ final class OrderRepository extends Repository
     public function find($id): ?array
     {
         return $this->fetchOne(
-            "SELECT o.id, o.status, o.created_at, o.total_cents, o.shipping_name, o.shipping_address, o.shipping_zip, o.shipping_city, o.shipping_phone, u.email, u.first_name, u.last_name FROM orders o
+            "SELECT o.id, o.user_id, o.status, o.created_at, o.total_cents, o.shipping_name, o.shipping_address, o.shipping_zip, o.shipping_city, o.shipping_phone, u.email, u.first_name, u.last_name FROM orders o
              JOIN users u ON u.id = o.user_id WHERE o.id = ?",
             [$id]
         );

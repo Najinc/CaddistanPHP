@@ -63,7 +63,7 @@ final class ProductRepository extends Repository
 
     public function find($id): ?array
     {
-        return $this->fetchOne('SELECT p.slug, p.name, p.price_cents, p.short_description, p.image, p.id, p.stock, p.description, p.datasheet, p.category_id, p.is_active, p.created_at, p.updated_at FROM products WHERE id = ?', [$id]);
+        return $this->fetchOne('SELECT p.slug, p.name, p.price_cents, p.short_description, p.image, p.id, p.stock, p.description, p.datasheet, p.category_id, p.is_active, p.created_at, p.updated_at FROM products p WHERE id = ?', [$id]);
     }
 
     public function findActiveBySlug(string $slug): ?array
@@ -80,7 +80,7 @@ final class ProductRepository extends Repository
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         
         $rows = $this->fetchAll(
-            "SELECT p.slug, p.name, p.price_cents, p.short_description, p.image, p.id, p.stock, p.description, p.datasheet, p.category_id, p.is_active, p.created_at, p.updated_at FROM products WHERE is_active = 1 AND id IN ($placeholders)",
+            "SELECT p.slug, p.name, p.price_cents, p.short_description, p.image, p.id, p.stock, p.description, p.datasheet, p.category_id, p.is_active, p.created_at, p.updated_at FROM products p WHERE is_active = 1 AND id IN ($placeholders)",
             $ids
         );
 
