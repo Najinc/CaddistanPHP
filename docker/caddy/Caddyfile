@@ -4,6 +4,18 @@
 
     root * /var/www/public
 
+    # En-têtes de sécurité des fichiers statiques (/dist, /images…), qui ne passent pas par PHP.
+    # "?" = valeur par défaut : les réponses PHP gardent les leurs (App\Core\SecurityHeaders,
+    # dont la CSP avec nonce, différente à chaque requête).
+    header {
+        ?Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        # Un fichier statique ouvert directement (ex : un SVG) ne peut rien charger ni exécuter
+        ?Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
+        ?X-Frame-Options "DENY"
+        ?X-Content-Type-Options "nosniff"
+        ?Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
     respond /hot 404
 
     # Websocket Vite (HMR)

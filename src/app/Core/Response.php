@@ -4,7 +4,7 @@ namespace App\Core;
 
 /**
  * Réponse HTTP renvoyée par les contrôleurs.
- * Point central pour, plus tard, ajouter les en-têtes de sécurité.
+ * Point central des en-têtes de sécurité : ils sont ajoutés à l'envoi (voir SecurityHeaders).
  */
 class Response
 {
@@ -60,11 +60,22 @@ class Response
         return $this->status;
     }
 
+    /**
+     * En-têtes réellement envoyés : ceux de la réponse, complétés par les en-têtes de sécurité.
+     * Une réponse peut en durcir un (withHeader), mais ne peut pas en être privée par oubli.
+     *
+     * @return array<string, string>
+     */
+    public function headers(): array
+    {
+        return $this->headers + SecurityHeaders::all();
+    }
+
     public function send(): void
     {
         http_response_code($this->status);
 
-        foreach ($this->headers as $name => $value) {
+        foreach ($this->headers() as $name => $value) {
             header($name . ': ' . $value);
         }
 
