@@ -8,18 +8,14 @@ use App\Auth\Csrf\CsrfTokenManager;
 use App\Auth\Exception\AuthenticationException;
 use App\Auth\Session\SessionInterface;
 
-/**
- * Connexion / déconnexion par session.
- */
 final class Authenticator
 {
-    /** Le même message que le compte existe ou non : on ne révèle pas quels emails sont inscrits. */
+    /** Même message que l'email existe ou non. */
     public const FAILURE_MESSAGE = 'Email ou mot de passe incorrect.';
 
-    private const SESSION_USER_ID = '_auth.user_id';
+    private const SESSION_KEY = 'user_id';
 
     private ?Authenticatable $user = null;
-    private bool $resolved = false;
 
     public function __construct(
         private readonly SessionInterface $session,
@@ -29,25 +25,20 @@ final class Authenticator
     ) {
     }
 
-    /** À utiliser aussi à l'inscription, pour que « Alice@x.fr » et « alice@x.fr » soient le même compte. */
+    /** "  Alice@X.fr " et "alice@x.fr" sont le même compte (à utiliser aussi à l'inscription). */
     public static function normalizeEmail(string $email): string
     {
-        return mb_strtolower(trim($email), 'UTF-8');
+        return mb_strtolower(trim($email));
     }
 
-    /**
-     * Vérifie les identifiants et connecte l'utilisateur.
-     * En cas d'échec, afficher Authenticator::FAILURE_MESSAGE, quelle que soit la cause.
-     *
-     * Le rate limiting (Partie 5) s'applique autour de cet appel.
-     */
     public function attempt(string $email, #[\SensitiveParameter] string $password): bool
     {
         $user = $this->users->findByEmail(self::normalizeEmail($email));
 
         if ($user === null) {
-            // Même coût qu'une vraie vérification : le temps de réponse ne trahit pas l'absence du compte.
-            $this->hasher->simulateVerify($password);
+            // On hache quand même : la réponse prend autant de temps qu'avec un mauvais mot de passe,
+            // donc on ne peut pas deviner quels emails sont inscrits en chronométrant.
+            $this->hasher->hash($password);
 
             return false;
         }
@@ -56,7 +47,7 @@ final class Authenticator
             return false;
         }
 
-        // Le mot de passe en clair n'est disponible qu'ici : on en profite pour migrer les vieux hash.
+        // Seul moment où l'on a le mot de passe en clair : on en profite pour refaire un vieux hash.
         if ($this->hasher->needsRehash($user->getAuthPasswordHash())) {
             $this->users->updatePasswordHash($user->getAuthId(), $this->hasher->hash($password));
         }
@@ -66,39 +57,28 @@ final class Authenticator
         return true;
     }
 
-    /** Connecte un utilisateur déjà vérifié (après attempt(), après une inscription, ou via un magic link). */
     public function login(Authenticatable $user): void
     {
-        // Nouvel ID de session : un ID fixé ou volé avant la connexion devient inutilisable.
+        // Nouvel ID de session : un ID volé ou imposé avant la connexion ne sert plus à rien.
         $this->session->regenerate();
-        $this->session->set(self::SESSION_USER_ID, $user->getAuthId());
+        $this->session->set(self::SESSION_KEY, $user->getAuthId());
         $this->csrf->regenerate();
 
         $this->user = $user;
-        $this->resolved = true;
     }
 
-    /** Destruction complète : données, session côté serveur et cookie. */
     public function logout(): void
     {
         $this->session->destroy();
         $this->user = null;
-        $this->resolved = true;
     }
 
+    /** Relu en base à chaque requête : un rôle modifié ou un compte supprimé est pris en compte tout de suite. */
     public function user(): ?Authenticatable
     {
-        if (!$this->resolved) {
-            $this->resolved = true;
-            $id = $this->session->get(self::SESSION_USER_ID);
-
-            if (is_int($id)) {
-                // Rechargé depuis la base à chaque requête : un rôle modifié ou un compte supprimé est pris en compte tout de suite.
-                $this->user = $this->users->findById($id);
-                if ($this->user === null) {
-                    $this->session->remove(self::SESSION_USER_ID);
-                }
-            }
+        if ($this->user === null) {
+            $id = $this->session->get(self::SESSION_KEY);
+            $this->user = is_int($id) ? $this->users->findById($id) : null;
         }
 
         return $this->user;
@@ -109,7 +89,6 @@ final class Authenticator
         return $this->user() !== null;
     }
 
-    /** @throws AuthenticationException */
     public function requireUser(): Authenticatable
     {
         return $this->user() ?? throw new AuthenticationException();
