@@ -43,7 +43,6 @@ final class PathTraversalTest extends TestCase
 
     public function test_seul_le_nom_du_fichier_est_garde(): void
     {
-        // Le chemin est ignoré : on retombe sur une vraie fiche du dossier, donc rien ne fuit.
         $this->assertSame(200, $this->documents->download('../../caddy-classic-100l.txt')->status());
     }
 }
