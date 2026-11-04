@@ -16,7 +16,7 @@ cp_env:
 	cp .env.example .env
 	$(MAKE) app_key
 
-# Génère une APP_KEY aléatoire dans le .env (clé HMAC des URL signées, Partie 3)
+# Génère une APP_KEY aléatoire dans le .env (clé des URL signées)
 app_key:
 	@key=$$(openssl rand -base64 32) && \
 	sed -i.bak "s|^APP_KEY=.*|APP_KEY=\"$$key\"|" .env && rm -f .env.bak && \

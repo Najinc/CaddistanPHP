@@ -20,7 +20,5 @@
         </table>
     </div>
 
-    <p class="mt-4 text-xs text-slate-400">
-        Lien de suivi sécurisé : il expire automatiquement et l'adresse de livraison n'est pas affichée.
-    </p>
+    <p class="mt-4 text-xs text-slate-400">Ce lien de suivi expire automatiquement.</p>
 </div>

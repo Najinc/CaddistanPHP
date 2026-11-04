@@ -70,7 +70,7 @@ function auth(): ?array
     return Auth::user();
 }
 
-/** Champ caché du token CSRF, à mettre dans chaque formulaire POST : {!! csrf_field() !!} */
+/** À mettre dans chaque formulaire POST : {!! csrf_field() !!} */
 function csrf_field(): string
 {
     return Auth::csrf()->field();

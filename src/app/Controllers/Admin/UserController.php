@@ -30,7 +30,7 @@ final class UserController extends Controller
         $users = new UserRepository();
         $user = $users->find($this->routeId($id)) ?? throw HttpException::notFound('Utilisateur introuvable.');
 
-        // Un admin ne peut pas se retirer ses propres droits (risque de ne plus avoir aucun admin).
+        // Évite qu'un admin se retire lui-même ses droits.
         if ((int) $user['id'] === Auth::id()) {
             return $this->back('/admin/utilisateurs', 'Vous ne pouvez pas modifier votre propre rôle.');
         }

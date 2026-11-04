@@ -80,7 +80,7 @@ abstract class Controller
         }
     }
 
-    /** Permission obligatoire (voir app/Auth/permissions.php) : connexion demandée si besoin, 403 s'il manque le droit. */
+    /** Connexion demandée si besoin, puis 403 s'il manque la permission (voir app/Auth/permissions.php). */
     protected function authorize(string $permission): void
     {
         $this->requireLogin();
