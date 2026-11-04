@@ -79,4 +79,11 @@ abstract class Controller
             throw new HttpException(401);
         }
     }
+
+    /** Permission obligatoire (voir app/Auth/permissions.php) : connexion demandée si besoin, 403 s'il manque le droit. */
+    protected function authorize(string $permission): void
+    {
+        $this->requireLogin();
+        Auth::authorize($permission);
+    }
 }

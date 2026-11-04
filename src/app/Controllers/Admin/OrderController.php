@@ -12,6 +12,7 @@ final class OrderController extends Controller
 {
     public function index(): Response
     {
+        $this->authorize('order.view_any');
         $v = $this->queryValidator();
         $status = $v->in('statut', 'Le statut', OrderRepository::STATUSES, required: false);
         $v->validate();
@@ -26,6 +27,7 @@ final class OrderController extends Controller
 
     public function show(string $id): Response
     {
+        $this->authorize('order.view_any');
         $orders = new OrderRepository();
         $order = $orders->find($this->routeId($id)) ?? throw HttpException::notFound('Commande introuvable.');
 
@@ -39,6 +41,7 @@ final class OrderController extends Controller
 
     public function updateStatus(string $id): Response
     {
+        $this->authorize('order.update_status');
         $orders = new OrderRepository();
         $order = $orders->find($this->routeId($id)) ?? throw HttpException::notFound('Commande introuvable.');
         $v = $this->validator();
