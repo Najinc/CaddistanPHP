@@ -9,6 +9,8 @@ use App\Auth\Bridge\RepositoryUserProvider;
 use App\Auth\Bridge\UserRow;
 use App\Auth\Csrf\CsrfTokenManager;
 use App\Auth\PasswordHasher;
+use App\Auth\Signing\FileUsedTokenStore;
+use App\Auth\Signing\MagicLink;
 use App\Auth\Signing\UrlSigner;
 
 /**
@@ -22,6 +24,7 @@ final class Auth
     private static ?CsrfTokenManager $csrf = null;
     private static ?PasswordHasher $hasher = null;
     private static ?UrlSigner $signer = null;
+    private static ?MagicLink $magicLink = null;
 
     public static function attempt(string $email, #[\SensitiveParameter] string $password): bool
     {
@@ -114,6 +117,16 @@ final class Auth
         return self::$signer ??= new UrlSigner((string) env('APP_KEY'));
     }
 
+    public static function magicLinkFor(array $user): string
+    {
+        return rtrim((string) env('APP_URL'), '/') . self::magicLink()->create(new UserRow($user));
+    }
+
+    public static function loginWithMagicLink(string $url): void
+    {
+        self::authenticator()->login(self::magicLink()->consume($url));
+    }
+
     private static function authenticator(): Authenticator
     {
         return self::$authenticator ??= new Authenticator(
@@ -132,5 +145,10 @@ final class Auth
     private static function hasher(): PasswordHasher
     {
         return self::$hasher ??= new PasswordHasher();
+    }
+
+    private static function magicLink(): MagicLink
+    {
+        return self::$magicLink ??= new MagicLink(self::signer(), new FileUsedTokenStore(), new RepositoryUserProvider());
     }
 }
