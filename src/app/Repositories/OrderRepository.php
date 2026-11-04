@@ -37,7 +37,7 @@ final class OrderRepository extends Repository
                     $shipping['phone']
                 ]
             );
-            $orderId = (int) $this->db->lastInsertId();
+            $orderId = (int) $this->lastInsertId();
 
             foreach ($lines as $line) {
                 $product = $line['product'];
