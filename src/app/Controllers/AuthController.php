@@ -68,7 +68,7 @@ final class AuthController extends Controller
             return $this->redirect('/inscription');
         }
 
-        $id = $users->create($data['email'], $password, $data['first_name'], $data['last_name']);
+        $id = $users->create($data['email'], Auth::hashPassword($password), $data['first_name'], $data['last_name']);
         Auth::login($users->find($id));
         Session::flash('success', 'Bienvenue chez Caddistan, ' . $data['first_name'] . ' !');
 

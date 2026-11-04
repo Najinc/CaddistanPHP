@@ -35,13 +35,17 @@ final class AccountController extends Controller
         $current   = $v->password('current_password', 'Le mot de passe actuel', 1, 72, required: $password !== null);
         $v->validate();
 
+        // Vérifié AVANT toute modification : un mauvais mot de passe actuel n'enregistre rien.
+        if ($password !== null && !Auth::checkPassword($current)) {
+            return $this->back('/compte', 'Mot de passe actuel incorrect.');
+        }
+
         $users->updateProfile(Auth::id(), $firstName, $lastName);
 
         if ($password !== null) {
-            if ($current !== Auth::user()['password']) {
-                return $this->back('/compte', 'Mot de passe actuel incorrect.');
-            }
-            $users->updatePassword(Auth::id(), $password);
+            $users->updatePassword(Auth::id(), Auth::hashPassword($password));
+            // Nouvel ID de session : une session volée avant le changement ne vaut plus rien.
+            Auth::renewSession();
         }
 
         Session::flash('success', 'Profil mis à jour.');
