@@ -9,7 +9,7 @@ git fetch origin
 git checkout najib          # ou : git switch najib
 cd src
 composer dump-autoload      # src/vendor/ n'est pas versionné
-php tests/Auth/run.php      # 67 tests, tous verts
+php tests/Auth/run.php      # 57 tests, tous verts
 ```
 
 Dans Docker : `docker compose exec app php tests/Auth/run.php`.
@@ -27,15 +27,16 @@ Dans Docker : `docker compose exec app php tests/Auth/run.php`.
 |---|---|
 | Argon2id, `password_needs_rehash`, même message et même temps de réponse que le compte existe ou non | `PasswordHasher`, `Authenticator` |
 | `session_regenerate_id(true)` au login, destruction complète au logout, timeout d'inactivité de 30 min | `Session\NativeSession`, `Authenticator` |
-| Cookies HttpOnly, Secure, SameSite=Lax, préfixe `__Host-`, `use_strict_mode` | `Session\CookiePolicy`, `Session\NativeSession` |
+| Cookies HttpOnly, Secure, SameSite=Lax, préfixe `__Host-`, `use_strict_mode` | `Session\NativeSession` |
 | Token CSRF par session sur tout sauf GET/HEAD/OPTIONS, `hash_equals` | `Csrf\CsrfTokenManager` |
 | Rôles → permissions, refus par défaut | `Authorization\Gate`, `permissions.php` |
 | Contrôle de propriété (404 sur la commande d'un autre) | `Gate::authorizeOwnership()` |
-| Routes signées HMAC (sous-clé d'`APP_KEY`), bonus magic links à usage unique | `Signing\UrlSigner`, `Signing\MagicLink` |
+| Routes signées HMAC (clé `APP_KEY`), bonus magic links à usage unique | `Signing\UrlSigner`, `Signing\MagicLink` |
 | Redirection après login sans open redirect | `SafeRedirect` |
 
-Démo pour la soutenance : sans `simulateVerify()`, un email inconnu répond en 0,0 ms contre 49,7 ms
-pour un mauvais mot de passe. Le test `email inconnu prend autant de temps…` le détecte.
+Démo pour la soutenance : sans la ligne `$this->hasher->hash($password)` du cas « email inconnu »
+dans `Authenticator::attempt()`, un email inconnu répond en 0,0 ms contre 49,7 ms pour un mauvais
+mot de passe. Le test `email inconnu prend autant de temps…` le détecte.
 
 ## Ce que Louis a poussé sur main (fc3fd0c)
 
@@ -61,8 +62,8 @@ Failles qui concernent la Partie 3 :
 - Rôles : `customer` (et pas `client`) dans `permissions.php` et les tests.
 - Ses utilisateurs et commandes sont des **tableaux** : ajouter deux petits adaptateurs vers
   `Authenticatable` / `UserProviderInterface` (qui appelle son `UserRepository`) et `OwnedResource`.
-- Faire hériter `AuthException` de `App\Core\HttpException`, sinon son `index.php` renvoie une 500
-  au lieu de 401 (redirection vers `/connexion`) / 403 / 404.
+- ~~Faire hériter les exceptions de `App\Core\HttpException`~~ : fait, son `index.php` renvoie
+  directement 401 (redirection vers `/connexion`) / 403 / 404.
 
 ### 2. Intégration dans la base de Louis (décision en attente)
 
@@ -89,7 +90,7 @@ la validation. **Prévenir Louis avant.**
 
 ## Points à transmettre aux autres
 
-- **Louis** : convertir les exceptions de la Partie 3 via son `HttpException` ; permettre la sortie
+- **Louis** : permettre la sortie
   brute de `csrf_field()` quand il ajoutera l'échappement par défaut ; `APP_KEY` dans les secrets
   obligatoires si on utilise les routes signées ; valider la liste blanche des rôles dans
   `Admin\UserController::updateRole()`.
