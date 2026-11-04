@@ -55,9 +55,11 @@ final class AccountController extends Controller
 
     public function order(string $id): Response
     {
-        $this->requireLogin();
+        $this->authorize('order.view');
         $orders = new OrderRepository();
         $order = $orders->find($this->routeId($id)) ?? throw HttpException::notFound('Commande introuvable.');
+        // Anti-IDOR : la commande d'un autre client répond 404, comme une commande qui n'existe pas.
+        Auth::authorizeOwner($order);
 
         return $this->view('account/order', [
             'title' => 'Commande n°' . $order['id'],

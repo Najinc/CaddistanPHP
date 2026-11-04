@@ -13,7 +13,7 @@ final class ReviewController extends Controller
 {
     public function store(string $slug): Response
     {
-        $this->requireLogin();
+        $this->authorize('review.create');
         $slug = $this->routeSlug($slug);
         $product = (new ProductRepository())->findActiveBySlug($slug) ?? throw HttpException::notFound();
 
