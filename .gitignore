@@ -12,3 +12,5 @@
 /src/storage/cache/views/*
 !/src/storage/cache/views/.gitkeep
 /src/storage/cache/data/
+/src/storage/uploads/products/*
+!/src/storage/uploads/products/.gitkeep
