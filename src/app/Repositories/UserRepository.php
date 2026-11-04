@@ -6,12 +6,12 @@ final class UserRepository extends Repository
 {
     public function find($id): ?array
     {
-        return $this->fetchOne('SELECT id, first_name, last_name, role FROM users WHERE id = ?', [$id]);
+        return $this->fetchOne('SELECT id, first_name, last_name, role, email FROM users WHERE id = ?', [$id]);
     }
 
     public function findByEmail(string $email): ?array
     {
-        return $this->fetchOne('SELECT id, first_name, last_name, role FROM users WHERE email = ?', [$email]);
+        return $this->fetchOne('SELECT id, first_name, last_name, role, email, password FROM users WHERE email = ?', [$email]);
     }
 
     public function all(): array
