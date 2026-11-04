@@ -19,22 +19,17 @@ final class DocumentController extends Controller
         return Response::download($path, basename($path), 'text/plain; charset=UTF-8');
     }
 
-    /** Chemin réel du fichier, ou null s'il n'existe pas ou sort du dossier des documents. */
     private static function safePath(string $filename): ?string
     {
-        // Un octet nul fait planter realpath().
         if (str_contains($filename, "\0")) {
             return null;
         }
 
-        // 1. basename : on ne garde que le nom ("../../composer.json" devient "composer.json").
         $name = basename($filename);
 
-        // 2. realpath : chemin absolu réel, ".." et liens symboliques résolus (false si rien n'existe).
         $dir = realpath(self::DOCUMENTS_DIR);
         $path = realpath(self::DOCUMENTS_DIR . DIRECTORY_SEPARATOR . $name);
 
-        // 3. Le fichier doit être DANS le dossier (bloque ".." et un lien symbolique qui pointerait ailleurs).
         if ($dir === false || $path === false || !str_starts_with($path, $dir . DIRECTORY_SEPARATOR) || !is_file($path)) {
             return null;
         }
