@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Core\Database;
 use PDO;
+use PDOStatement;
 
 abstract class Repository
 {
@@ -14,18 +15,33 @@ abstract class Repository
         $this->db = Database::connection();
     }
 
-    protected function fetchOne(string $sql): ?array
+    protected function fetchOne(string $sql, array $params = []): ?array
     {
-        return $this->db->query($sql)->fetch() ?: null;
+        $requestSql = $this->executeQuery($sql, $params);
+        return $requestSql->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    protected function fetchAll(string $sql): array
+    protected function fetchAll(string $sql, array $params = []): array
     {
-        return $this->db->query($sql)->fetchAll();
+        $requestSql = $this->executeQuery($sql, $params);
+        return $requestSql->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    protected function execute(string $sql): int
+    protected function execute(string $sql, array $params = []): int
     {
-        return (int) $this->db->exec($sql);
+        $requestSql = $this->executeQuery($sql, $params);
+        return $requestSql->rowCount();
+    }
+
+    protected function lastInsertId(): string
+    {
+        return $this->db->lastInsertId();
+    }
+
+    protected function executeQuery(string $sql, array $params): PDOStatement
+    {
+        $requestSql = $this->db->prepare($sql);
+        $requestSql->execute($params);
+        return $requestSql;
     }
 }
