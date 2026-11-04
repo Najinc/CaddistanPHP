@@ -20,8 +20,8 @@ final class GateTest extends TestCase
     public function setUp(): void
     {
         $this->gate = new Gate(require dirname(__DIR__, 2) . '/app/Auth/permissions.php');
-        $this->client = new FakeUser(1, 'alice@caddistan.test', '', 'client');
-        $this->otherClient = new FakeUser(2, 'bob@caddistan.test', '', 'client');
+        $this->client = new FakeUser(1, 'alice@caddistan.test', '', 'customer');
+        $this->otherClient = new FakeUser(2, 'bob@caddistan.test', '', 'customer');
         $this->admin = new FakeUser(3, 'admin@caddistan.test', '', 'admin');
     }
 
@@ -45,6 +45,20 @@ final class GateTest extends TestCase
 
         $this->assertSame(401, $e->status);
         $this->assertFalse($this->gate->can(null, 'order.view'));
+    }
+
+    public function test_un_client_n_a_acces_a_aucune_page_admin(): void
+    {
+        foreach (['admin.dashboard', 'caddy.create', 'caddy.delete', 'order.view_any', 'order.update_status', 'user.view_any', 'user.change_role'] as $permission) {
+            $this->assertFalse($this->gate->can($this->client, $permission), 'accordé à tort : ' . $permission);
+        }
+    }
+
+    public function test_l_admin_a_aussi_toutes_les_permissions_client(): void
+    {
+        foreach (['order.create', 'order.view', 'review.create'] as $permission) {
+            $this->assertTrue($this->gate->can($this->admin, $permission), 'manquant : ' . $permission);
+        }
     }
 
     public function test_permission_inconnue_refusee_meme_a_l_admin(): void

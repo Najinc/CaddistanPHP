@@ -18,7 +18,7 @@ final class FakeUser implements Authenticatable
         public readonly int $id,
         public readonly string $email,
         public string $passwordHash,
-        public readonly string $role = 'client',
+        public readonly string $role = 'customer',
     ) {
     }
 
