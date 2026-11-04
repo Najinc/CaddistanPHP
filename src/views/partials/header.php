@@ -35,7 +35,7 @@ $cartCount = Cart::count();
             </a>
 
             <?php if (Auth::check()): ?>
-                <?php if (Auth::isAdmin()): ?>
+                <?php if (Auth::can('admin.dashboard')): ?>
                     <a href="/admin" class="nav-link {{ is_current('/admin') ? 'is-active' : '' }}">Admin</a>
                 <?php endif ?>
                 <a href="/compte" class="nav-link {{ is_current('/compte') ? 'is-active' : '' }}">{{ Auth::user()['first_name'] }}</a>
