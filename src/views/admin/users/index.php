@@ -15,6 +15,7 @@
                     <td>{{ $user['orders_count'] }}</td>
                     <td>
                         <form action="/admin/utilisateurs/{{ $user['id'] }}/role" method="post" class="flex items-center gap-2">
+                            {!! csrf_field() !!}
                             <select name="role" class="input w-auto py-1" data-autosubmit>
                                 <?php foreach ($roles as $role): ?>
                                     <option value="{{ $role }}" {{ $user['role'] === $role ? 'selected' : '' }}>{{ $role === 'admin' ? 'Administrateur' : 'Client' }}</option>

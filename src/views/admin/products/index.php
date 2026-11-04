@@ -27,6 +27,7 @@
                         <a href="/admin/produits/{{ $product['id'] }}/modifier" class="btn-link">Modifier</a>
                         <form action="/admin/produits/{{ $product['id'] }}/supprimer" method="post" class="ml-3 inline"
                               data-confirm="Supprimer « {{ $product['name'] }} » ?">
+                            {!! csrf_field() !!}
                             <button type="submit" class="btn-link text-red-600">Supprimer</button>
                         </form>
                     </td>

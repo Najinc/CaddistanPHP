@@ -3,6 +3,7 @@
 
 <div class="mt-6 grid gap-8 lg:grid-cols-[1fr_360px]">
     <form action="/commande" method="post" class="card space-y-4 p-6">
+        {!! csrf_field() !!}
         <h2 class="text-lg">Adresse de livraison</h2>
         <div>
             <label for="name" class="label">Nom complet</label>

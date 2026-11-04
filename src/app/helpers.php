@@ -70,6 +70,12 @@ function auth(): ?array
     return Auth::user();
 }
 
+/** Champ caché du token CSRF, à mettre dans chaque formulaire POST : {!! csrf_field() !!} */
+function csrf_field(): string
+{
+    return Auth::csrf()->field();
+}
+
 /** Génère un slug URL : "Caddy Maxi 240 L" => "caddy-maxi-240-l". */
 function slugify(string $text): string
 {
