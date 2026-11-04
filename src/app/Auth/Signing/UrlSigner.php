@@ -7,149 +7,63 @@ namespace App\Auth\Signing;
 use App\Auth\Exception\InvalidSignatureException;
 
 /**
- * Routes signées : HMAC-SHA256 sur le chemin, les paramètres et la date d'expiration.
+ * URL signées : un lien qui donne accès à une page précise, sans session, pendant un temps limité.
  *
- *   $url = $signer->sign('/commandes/12/facture', 3600);
- *   // "/commandes/12/facture?expires=1767225600&signature=3f9a…"
- *   $signer->verify($_SERVER['REQUEST_URI']); // lève une exception si un seul caractère a changé
+ *   "/commandes/12/facture"  →  "/commandes/12/facture?expires=1767225600&signature=3f9a…"
  *
- * Sans APP_KEY, impossible de fabriquer une signature valide : on peut donc
- * envoyer un lien qui donne accès à une ressource précise, pour une durée limitée,
- * sans session.
+ * La signature est un HMAC-SHA256 de tout ce qui la précède, calculé avec APP_KEY.
+ * Changer un seul caractère (l'id, la date…) rend la signature fausse.
  */
 final class UrlSigner
 {
-    public const SIGNATURE = 'signature';
-    public const EXPIRES = 'expires';
-
-    private const MIN_KEY_BYTES = 32;
-
-    private readonly string $key;
-
-    /** @param (\Closure(): int)|null $clock horloge injectable (tests) ; time() par défaut */
+    /** @param \Closure|null $clock horloge remplaçable dans les tests */
     public function __construct(
-        #[\SensitiveParameter] string $appKey,
+        #[\SensitiveParameter] private readonly string $key,
         private readonly ?\Closure $clock = null,
     ) {
-        if (strlen($appKey) < self::MIN_KEY_BYTES) {
+        if (strlen($key) < 32) {
             throw new \InvalidArgumentException('APP_KEY trop courte : il faut au moins 32 octets aléatoires.');
         }
-
-        // Sous-clé dédiée aux URL signées : si APP_KEY sert aussi ailleurs, une signature
-        // calculée pour un autre usage ne peut pas être réutilisée ici.
-        $this->key = hash_hkdf('sha256', $appKey, 32, 'caddistan/signed-url/v1');
     }
 
-    /**
-     * @param string $pathAndQuery chemin local, avec ou sans paramètres (ex. "/commandes/12/facture?format=pdf")
-     * @return string le même chemin, avec "expires" et "signature" ajoutés
-     */
-    public function sign(string $pathAndQuery, int $ttlSeconds): string
+    /** $url : chemin local déjà encodé, avec ou sans paramètres. */
+    public function sign(string $url, int $ttlSeconds): string
     {
-        if ($ttlSeconds <= 0) {
-            throw new \InvalidArgumentException('La durée de validité doit être positive.');
-        }
+        $url .= (str_contains($url, '?') ? '&' : '?') . 'expires=' . ($this->now() + $ttlSeconds);
 
-        [$path, $params] = self::split($pathAndQuery);
-
-        if (preg_match('#\A/(?![/\\\\])#', $path) !== 1) {
-            throw new \InvalidArgumentException('Seul un chemin local peut être signé (ex. "/commandes/12/facture").');
-        }
-        foreach ([self::SIGNATURE, self::EXPIRES] as $reserved) {
-            if (array_key_exists($reserved, $params)) {
-                throw new \InvalidArgumentException('Paramètre réservé : ' . $reserved);
-            }
-        }
-
-        $params[self::EXPIRES] = (string) ($this->now() + $ttlSeconds);
-        $params[self::SIGNATURE] = $this->compute($path, $params);
-
-        return $path . '?' . self::buildQuery($params);
+        return $url . '&signature=' . $this->hmac($url);
     }
 
     /**
-     * @param string $requestUri l'URL reçue, typiquement $_SERVER['REQUEST_URI']
-     * @return array<string, string> les paramètres vérifiés (dont "expires", hors "signature")
+     * Vérifie l'URL reçue (typiquement $_SERVER['REQUEST_URI']) et renvoie ses paramètres.
      *
-     * @throws InvalidSignatureException
+     * @return array<string, string>
      */
-    public function verify(string $requestUri): array
+    public function verify(string $url): array
     {
-        try {
-            [$path, $params] = self::split($requestUri);
-        } catch (\InvalidArgumentException) {
-            throw new InvalidSignatureException('invalid');
-        }
-
-        $signature = $params[self::SIGNATURE] ?? null;
-        $expires = $params[self::EXPIRES] ?? null;
-        if ($signature === null || $expires === null) {
+        // La signature est toujours à la fin : tout ce qui est avant est signé.
+        $parts = explode('&signature=', $url, 2);
+        if (count($parts) !== 2) {
             throw new InvalidSignatureException('missing');
         }
-        unset($params[self::SIGNATURE]);
+        [$signedPart, $signature] = $parts;
 
-        // hash_equals : comparaison en temps constant. Une comparaison classique (===) s'arrête
-        // au premier caractère différent, et le temps de réponse permettrait de deviner la signature.
-        if (preg_match('/\A[0-9a-f]{64}\z/', $signature) !== 1
-            || !hash_equals($this->compute($path, $params), $signature)) {
+        // hash_equals compare en temps constant : on ne peut pas deviner la signature caractère par caractère.
+        if (!hash_equals($this->hmac($signedPart), $signature)) {
             throw new InvalidSignatureException('invalid');
         }
 
-        // On vérifie l'expiration APRÈS la signature : la date fait partie des données signées,
-        // on sait donc qu'elle n'a pas été modifiée.
-        if (!ctype_digit($expires) || $this->now() >= (int) $expires) {
+        parse_str((string) parse_url($signedPart, PHP_URL_QUERY), $params);
+        if ((int) ($params['expires'] ?? 0) <= $this->now()) {
             throw new InvalidSignatureException('expired');
         }
 
         return $params;
     }
 
-    /** @param array<string, string> $params */
-    private function compute(string $path, array $params): string
+    private function hmac(string $data): string
     {
-        // Ordre canonique : réordonner les paramètres ne change pas la signature.
-        ksort($params, SORT_STRING);
-
-        return hash_hmac('sha256', $path . '?' . self::buildQuery($params), $this->key);
-    }
-
-    /**
-     * Découpe l'URL brute, sans passer par $_GET : PHP y transforme certains noms
-     * (points, crochets...) et la signature ne correspondrait plus à ce qui a été reçu.
-     *
-     * @return array{0: string, 1: array<string, string>}
-     */
-    private static function split(string $uri): array
-    {
-        $uri = explode('#', $uri, 2)[0];
-        [$path, $query] = array_pad(explode('?', $uri, 2), 2, '');
-
-        $params = [];
-        foreach (explode('&', $query) as $pair) {
-            if ($pair === '') {
-                continue;
-            }
-            [$name, $value] = array_pad(explode('=', $pair, 2), 2, '');
-            $name = urldecode($name);
-            if (array_key_exists($name, $params)) {
-                // Un paramètre en double serait ambigu (lequel l'application lirait-elle ?) : on refuse.
-                throw new \InvalidArgumentException('Paramètre en double : ' . $name);
-            }
-            $params[$name] = urldecode($value);
-        }
-
-        return [$path, $params];
-    }
-
-    /** @param array<array-key, string> $params */
-    private static function buildQuery(array $params): string
-    {
-        $parts = [];
-        foreach ($params as $name => $value) {
-            $parts[] = rawurlencode((string) $name) . '=' . rawurlencode($value);
-        }
-
-        return implode('&', $parts);
+        return hash_hmac('sha256', $data, $this->key);
     }
 
     private function now(): int

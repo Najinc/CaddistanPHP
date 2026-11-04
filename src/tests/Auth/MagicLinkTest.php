@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Auth;
 
 use App\Auth\Exception\InvalidSignatureException;
-use App\Auth\Signing\InMemoryUsedTokenStore;
 use App\Auth\Signing\MagicLink;
 use App\Auth\Signing\UrlSigner;
 use Tests\Auth\Support\FakeUser;
+use Tests\Auth\Support\InMemoryUsedTokenStore;
 use Tests\Auth\Support\InMemoryUserProvider;
 
 final class MagicLinkTest extends TestCase
@@ -17,7 +17,6 @@ final class MagicLinkTest extends TestCase
 
     private int $now = 1_800_000_000;
     private InMemoryUserProvider $users;
-    private InMemoryUsedTokenStore $store;
     private UrlSigner $signer;
     private MagicLink $magic;
     private FakeUser $alice;
@@ -27,9 +26,8 @@ final class MagicLinkTest extends TestCase
         $this->users = new InMemoryUserProvider();
         $this->alice = new FakeUser(1, 'alice@caddistan.test', '');
         $this->users->add($this->alice);
-        $this->store = new InMemoryUsedTokenStore();
         $this->signer = new UrlSigner(self::KEY, fn (): int => $this->now);
-        $this->magic = new MagicLink($this->signer, $this->store, $this->users);
+        $this->magic = new MagicLink($this->signer, new InMemoryUsedTokenStore(), $this->users);
     }
 
     public function test_le_lien_connecte_le_bon_utilisateur(): void
@@ -69,7 +67,6 @@ final class MagicLinkTest extends TestCase
 
     public function test_une_url_signee_pour_une_autre_page_ne_connecte_pas(): void
     {
-        // Même paramètres, signature valide, mais pour un autre chemin.
         $other = $this->signer->sign('/commandes/12/facture?user=1&nonce=' . str_repeat('a', 32), 900);
 
         $e = $this->expectThrows(InvalidSignatureException::class, fn () => $this->magic->consume($other));

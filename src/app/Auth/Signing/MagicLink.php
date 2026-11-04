@@ -8,62 +8,41 @@ use App\Auth\Authenticatable;
 use App\Auth\Exception\InvalidSignatureException;
 use App\Auth\UserProviderInterface;
 
-/**
- * Connexion sans mot de passe par un lien envoyé par email.
- *
- * Le lien est une URL signée (UrlSigner), plus :
- *  - une durée courte (15 minutes par défaut) ;
- *  - un usage unique : un lien déjà cliqué, ou intercepté puis rejoué, est refusé ;
- *  - une vérification du chemin : une URL signée pour une autre page ne permet pas de se connecter.
- */
+/** Connexion sans mot de passe par un lien envoyé par email : URL signée, valable 15 minutes, utilisable une seule fois. */
 final class MagicLink
 {
-    public const DEFAULT_PATH = '/connexion/lien';
+    private const PATH = '/connexion/lien';
+    private const TTL = 900;
 
     public function __construct(
         private readonly UrlSigner $signer,
         private readonly UsedTokenStoreInterface $usedTokens,
         private readonly UserProviderInterface $users,
-        private readonly string $path = self::DEFAULT_PATH,
-        private readonly int $ttlSeconds = 900,
     ) {
     }
 
-    /** Chemin signé à envoyer par email (préfixé par APP_URL). */
+    /** Chemin à envoyer par email, précédé de APP_URL. */
     public function create(Authenticatable $user): string
     {
         $nonce = bin2hex(random_bytes(16));
 
-        return $this->signer->sign(
-            sprintf('%s?user=%d&nonce=%s', $this->path, $user->getAuthId(), $nonce),
-            $this->ttlSeconds,
-        );
+        return $this->signer->sign(self::PATH . '?user=' . $user->getAuthId() . '&nonce=' . $nonce, self::TTL);
     }
 
-    /**
-     * Vérifie et consomme le lien. Renvoie l'utilisateur à passer ensuite à Authenticator::login().
-     *
-     * @throws InvalidSignatureException
-     */
-    public function consume(string $requestUri): Authenticatable
+    /** Vérifie le lien et le marque comme utilisé. Renvoie l'utilisateur à passer à Authenticator::login(). */
+    public function consume(string $url): Authenticatable
     {
-        $params = $this->signer->verify($requestUri);
+        $params = $this->signer->verify($url);
 
-        $path = explode('?', explode('#', $requestUri, 2)[0], 2)[0];
-        if ($path !== $this->path) {
+        // Une URL signée pour une autre page ne doit pas permettre de se connecter.
+        if (parse_url($url, PHP_URL_PATH) !== self::PATH) {
             throw new InvalidSignatureException('invalid');
         }
 
-        $userId = $params['user'] ?? '';
-        $nonce = $params['nonce'] ?? '';
-        if (!ctype_digit($userId) || preg_match('/\A[0-9a-f]{32}\z/', $nonce) !== 1) {
-            throw new InvalidSignatureException('invalid');
-        }
-
-        if (!$this->usedTokens->markUsed('magic-link:' . $nonce, (int) $params[UrlSigner::EXPIRES])) {
+        if (!$this->usedTokens->markUsed($params['nonce'], (int) $params['expires'])) {
             throw new InvalidSignatureException('already_used');
         }
 
-        return $this->users->findById((int) $userId) ?? throw new InvalidSignatureException('invalid');
+        return $this->users->findById((int) $params['user']) ?? throw new InvalidSignatureException('invalid');
     }
 }

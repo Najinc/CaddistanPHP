@@ -7,6 +7,7 @@ namespace Tests\Auth\Support;
 use App\Auth\Authenticatable;
 use App\Auth\Authorization\OwnedResource;
 use App\Auth\Session\SessionInterface;
+use App\Auth\Signing\UsedTokenStoreInterface;
 use App\Auth\UserProviderInterface;
 
 // Faux objets en mémoire : ils remplacent la base de données et la vraie session dans les tests.
@@ -120,5 +121,20 @@ final class ArraySession implements SessionInterface
     {
         $this->data = [];
         $this->regenerate();
+    }
+}
+
+final class InMemoryUsedTokenStore implements UsedTokenStoreInterface
+{
+    private array $used = [];
+
+    public function markUsed(string $token, int $expiresAt): bool
+    {
+        if (isset($this->used[$token])) {
+            return false;
+        }
+        $this->used[$token] = $expiresAt;
+
+        return true;
     }
 }
