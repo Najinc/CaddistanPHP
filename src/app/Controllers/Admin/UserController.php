@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
+use App\Core\Auth;
 use App\Core\HttpException;
 use App\Core\Response;
 use App\Core\Session;
@@ -14,6 +15,8 @@ final class UserController extends Controller
 
     public function index(): Response
     {
+        $this->authorize('user.view_any');
+
         return $this->view('admin/users/index', [
             'title' => 'Utilisateurs',
             'users' => (new UserRepository())->all(),
@@ -23,8 +26,14 @@ final class UserController extends Controller
 
     public function updateRole(string $id): Response
     {
+        $this->authorize('user.change_role');
         $users = new UserRepository();
         $user = $users->find($this->routeId($id)) ?? throw HttpException::notFound('Utilisateur introuvable.');
+
+        // Un admin ne peut pas se retirer ses propres droits (risque de ne plus avoir aucun admin).
+        if ((int) $user['id'] === Auth::id()) {
+            return $this->back('/admin/utilisateurs', 'Vous ne pouvez pas modifier votre propre rôle.');
+        }
 
         $v = $this->validator();
         $role = $v->in('role', 'Le rôle', self::ROLES);
