@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace App\Auth\Exception;
 
-/** Aucun utilisateur connecté alors que la route l'exige : 401 (ou redirection vers le login pour une page HTML). */
-final class AuthenticationException extends AuthException
-{
-    public function __construct(string $message = 'Authentification requise.')
-    {
-        parent::__construct($message);
-    }
+use App\Core\HttpException;
 
-    public function statusCode(): int
+/** Personne n'est connecté : 401 (redirection vers /connexion). */
+final class AuthenticationException extends HttpException
+{
+    public function __construct()
     {
-        return 401;
+        parent::__construct(401, 'Authentification requise.');
     }
 }

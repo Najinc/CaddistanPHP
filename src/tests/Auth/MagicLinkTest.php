@@ -46,7 +46,7 @@ final class MagicLinkTest extends TestCase
         $this->magic->consume($link);
 
         $e = $this->expectThrows(InvalidSignatureException::class, fn () => $this->magic->consume($link));
-        $this->assertSame(InvalidSignatureException::ALREADY_USED, $e->reason);
+        $this->assertSame('already_used', $e->reason);
     }
 
     public function test_le_lien_expire_apres_15_minutes(): void
@@ -55,7 +55,7 @@ final class MagicLinkTest extends TestCase
         $this->now += 900;
 
         $e = $this->expectThrows(InvalidSignatureException::class, fn () => $this->magic->consume($link));
-        $this->assertSame(InvalidSignatureException::EXPIRED, $e->reason);
+        $this->assertSame('expired', $e->reason);
     }
 
     public function test_changer_l_utilisateur_dans_le_lien_est_refuse(): void
@@ -64,7 +64,7 @@ final class MagicLinkTest extends TestCase
         $link = $this->magic->create($this->alice);
 
         $e = $this->expectThrows(InvalidSignatureException::class, fn () => $this->magic->consume(str_replace('user=1', 'user=2', $link)));
-        $this->assertSame(InvalidSignatureException::INVALID, $e->reason);
+        $this->assertSame('invalid', $e->reason);
     }
 
     public function test_une_url_signee_pour_une_autre_page_ne_connecte_pas(): void
@@ -73,7 +73,7 @@ final class MagicLinkTest extends TestCase
         $other = $this->signer->sign('/commandes/12/facture?user=1&nonce=' . str_repeat('a', 32), 900);
 
         $e = $this->expectThrows(InvalidSignatureException::class, fn () => $this->magic->consume($other));
-        $this->assertSame(InvalidSignatureException::INVALID, $e->reason);
+        $this->assertSame('invalid', $e->reason);
     }
 
     public function test_compte_supprime_entre_temps_refuse(): void

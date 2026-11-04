@@ -51,19 +51,19 @@ final class MagicLink
 
         $path = explode('?', explode('#', $requestUri, 2)[0], 2)[0];
         if ($path !== $this->path) {
-            throw InvalidSignatureException::invalid();
+            throw new InvalidSignatureException('invalid');
         }
 
         $userId = $params['user'] ?? '';
         $nonce = $params['nonce'] ?? '';
         if (!ctype_digit($userId) || preg_match('/\A[0-9a-f]{32}\z/', $nonce) !== 1) {
-            throw InvalidSignatureException::invalid();
+            throw new InvalidSignatureException('invalid');
         }
 
         if (!$this->usedTokens->markUsed('magic-link:' . $nonce, (int) $params[UrlSigner::EXPIRES])) {
-            throw InvalidSignatureException::alreadyUsed();
+            throw new InvalidSignatureException('already_used');
         }
 
-        return $this->users->findById((int) $userId) ?? throw InvalidSignatureException::invalid();
+        return $this->users->findById((int) $userId) ?? throw new InvalidSignatureException('invalid');
     }
 }

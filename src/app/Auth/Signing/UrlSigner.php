@@ -78,13 +78,13 @@ final class UrlSigner
         try {
             [$path, $params] = self::split($requestUri);
         } catch (\InvalidArgumentException) {
-            throw InvalidSignatureException::invalid();
+            throw new InvalidSignatureException('invalid');
         }
 
         $signature = $params[self::SIGNATURE] ?? null;
         $expires = $params[self::EXPIRES] ?? null;
         if ($signature === null || $expires === null) {
-            throw InvalidSignatureException::missing();
+            throw new InvalidSignatureException('missing');
         }
         unset($params[self::SIGNATURE]);
 
@@ -92,13 +92,13 @@ final class UrlSigner
         // au premier caractère différent, et le temps de réponse permettrait de deviner la signature.
         if (preg_match('/\A[0-9a-f]{64}\z/', $signature) !== 1
             || !hash_equals($this->compute($path, $params), $signature)) {
-            throw InvalidSignatureException::invalid();
+            throw new InvalidSignatureException('invalid');
         }
 
         // On vérifie l'expiration APRÈS la signature : la date fait partie des données signées,
         // on sait donc qu'elle n'a pas été modifiée.
         if (!ctype_digit($expires) || $this->now() >= (int) $expires) {
-            throw InvalidSignatureException::expired();
+            throw new InvalidSignatureException('expired');
         }
 
         return $params;

@@ -36,7 +36,7 @@ final class GateTest extends TestCase
     {
         $e = $this->expectThrows(AccessDeniedException::class, fn () => $this->gate->authorize($this->client, 'caddy.edit'));
 
-        $this->assertSame(403, $e->statusCode());
+        $this->assertSame(403, $e->status);
         $this->assertSame('Accès refusé.', $e->getMessage());
     }
 
@@ -44,7 +44,7 @@ final class GateTest extends TestCase
     {
         $e = $this->expectThrows(AuthenticationException::class, fn () => $this->gate->authorize(null, 'order.view'));
 
-        $this->assertSame(401, $e->statusCode());
+        $this->assertSame(401, $e->status);
         $this->assertFalse($this->gate->can(null, 'order.view'));
     }
 
@@ -72,7 +72,7 @@ final class GateTest extends TestCase
             fn () => $this->gate->authorizeOwnership($this->otherClient, new FakeOrder(ownerId: 1), 'order.view_any'),
         );
 
-        $this->assertSame(404, $e->statusCode(), 'on ne révèle pas que la commande existe');
+        $this->assertSame(404, $e->status, 'on ne révèle pas que la commande existe');
         $this->assertSame('Page introuvable.', $e->getMessage());
     }
 

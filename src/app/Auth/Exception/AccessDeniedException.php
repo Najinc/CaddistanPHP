@@ -4,37 +4,25 @@ declare(strict_types=1);
 
 namespace App\Auth\Exception;
 
-/**
- * Utilisateur connecté mais pas autorisé.
- *
- * - forbidden() : 403, il lui manque une permission (ex. un client sur /admin).
- * - hidden()    : 404, la ressource appartient à quelqu'un d'autre. On répond
- *                 « introuvable » pour ne pas révéler qu'elle existe
- *                 (sinon on peut énumérer les commandes des autres clients).
- */
-final class AccessDeniedException extends AuthException
+use App\Core\HttpException;
+
+final class AccessDeniedException extends HttpException
 {
-    private function __construct(
-        string $message,
-        private readonly int $status,
-        /** Permission refusée ou raison, pour les logs (Partie 5). Jamais affichée. */
-        public readonly string $reason,
-    ) {
-        parent::__construct($message);
+    /** $reason sert aux logs, il n'est jamais affiché. */
+    private function __construct(int $status, string $message, public readonly string $reason)
+    {
+        parent::__construct($status, $message);
     }
 
-    public static function forbidden(string $permission): self
+    /** 403 : il manque une permission. */
+    public static function missingPermission(string $permission): self
     {
-        return new self('Accès refusé.', 403, 'permission manquante : ' . $permission);
+        return new self(403, 'Accès refusé.', 'permission manquante : ' . $permission);
     }
 
-    public static function hidden(string $reason): self
+    /** 404 : la ressource est à quelqu'un d'autre. On ne confirme pas qu'elle existe. */
+    public static function notOwner(string $reason): self
     {
-        return new self('Page introuvable.', 404, $reason);
-    }
-
-    public function statusCode(): int
-    {
-        return $this->status;
+        return new self(404, 'Page introuvable.', $reason);
     }
 }

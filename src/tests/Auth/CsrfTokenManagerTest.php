@@ -46,7 +46,7 @@ final class CsrfTokenManagerTest extends TestCase
 
         foreach (['faux', '', [$this->csrf->token()], 123] as $submitted) {
             $e = $this->expectThrows(CsrfTokenMismatchException::class, fn () => $this->csrf->verify('POST', $submitted));
-            $this->assertSame(403, $e->statusCode());
+            $this->assertSame(403, $e->status);
         }
     }
 

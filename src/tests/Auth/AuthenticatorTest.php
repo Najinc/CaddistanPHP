@@ -123,7 +123,7 @@ final class AuthenticatorTest extends TestCase
     {
         $e = $this->expectThrows(AuthenticationException::class, fn () => $this->auth->requireUser());
 
-        $this->assertSame(401, $e->statusCode());
+        $this->assertSame(401, $e->status);
     }
 
     /** Un nouvel Authenticator sur la même session simule la requête suivante. */

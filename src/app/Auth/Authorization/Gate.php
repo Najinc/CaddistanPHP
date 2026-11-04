@@ -33,7 +33,7 @@ final class Gate
             throw new AuthenticationException();
         }
         if (!$this->can($user, $permission)) {
-            throw AccessDeniedException::forbidden($permission);
+            throw AccessDeniedException::missingPermission($permission);
         }
     }
 
@@ -58,7 +58,7 @@ final class Gate
             return;
         }
 
-        throw AccessDeniedException::hidden(sprintf(
+        throw AccessDeniedException::notOwner(sprintf(
             'utilisateur %d sur une ressource de l\'utilisateur %d',
             $user->getAuthId(),
             $resource->getOwnerId(),

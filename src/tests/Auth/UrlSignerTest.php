@@ -31,28 +31,28 @@ final class UrlSignerTest extends TestCase
     {
         $url = $this->signer->sign('/commandes/12/facture?format=pdf', 3600);
 
-        $this->assertRejected(str_replace('format=pdf', 'format=html', $url), InvalidSignatureException::INVALID);
+        $this->assertRejected(str_replace('format=pdf', 'format=html', $url), 'invalid');
     }
 
     public function test_modifier_le_chemin_invalide_la_signature(): void
     {
         $url = $this->signer->sign('/commandes/12/facture', 3600);
 
-        $this->assertRejected(str_replace('/12/', '/13/', $url), InvalidSignatureException::INVALID);
+        $this->assertRejected(str_replace('/12/', '/13/', $url), 'invalid');
     }
 
     public function test_repousser_l_expiration_invalide_la_signature(): void
     {
         $url = $this->signer->sign('/commandes/12/facture', 3600);
 
-        $this->assertRejected(str_replace('expires=1800003600', 'expires=1900000000', $url), InvalidSignatureException::INVALID);
+        $this->assertRejected(str_replace('expires=1800003600', 'expires=1900000000', $url), 'invalid');
     }
 
     public function test_ajouter_un_parametre_invalide_la_signature(): void
     {
         $url = $this->signer->sign('/commandes/12/facture', 3600);
 
-        $this->assertRejected($url . '&admin=1', InvalidSignatureException::INVALID);
+        $this->assertRejected($url . '&admin=1', 'invalid');
     }
 
     public function test_un_lien_expire_est_refuse(): void
@@ -60,27 +60,27 @@ final class UrlSignerTest extends TestCase
         $url = $this->signer->sign('/commandes/12/facture', 60);
         $later = new UrlSigner(self::KEY, fn (): int => self::NOW + 60);
 
-        $this->assertRejected($url, InvalidSignatureException::EXPIRED, $later);
+        $this->assertRejected($url, 'expired', $later);
     }
 
     public function test_sans_signature_refuse(): void
     {
-        $this->assertRejected('/commandes/12/facture', InvalidSignatureException::MISSING);
-        $this->assertRejected('/commandes/12/facture?expires=1900000000', InvalidSignatureException::MISSING);
+        $this->assertRejected('/commandes/12/facture', 'missing');
+        $this->assertRejected('/commandes/12/facture?expires=1900000000', 'missing');
     }
 
     public function test_signature_d_une_autre_cle_refusee(): void
     {
         $other = new UrlSigner('une-autre-cle-tout-aussi-longue-!!!', fn (): int => self::NOW);
 
-        $this->assertRejected($other->sign('/commandes/12/facture', 3600), InvalidSignatureException::INVALID);
+        $this->assertRejected($other->sign('/commandes/12/facture', 3600), 'invalid');
     }
 
     public function test_parametre_en_double_refuse(): void
     {
         $url = $this->signer->sign('/commandes/12/facture?format=pdf', 3600);
 
-        $this->assertRejected($url . '&format=html', InvalidSignatureException::INVALID);
+        $this->assertRejected($url . '&format=html', 'invalid');
     }
 
     public function test_l_ordre_des_parametres_n_a_pas_d_importance(): void
@@ -125,7 +125,7 @@ final class UrlSignerTest extends TestCase
         $e = $this->expectThrows(InvalidSignatureException::class, fn () => $signer->verify($url));
 
         $this->assertSame($reason, $e->reason);
-        $this->assertSame(403, $e->statusCode());
+        $this->assertSame(403, $e->status);
         $this->assertSame('Lien invalide ou expiré.', $e->getMessage());
     }
 }
