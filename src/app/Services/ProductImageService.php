@@ -51,10 +51,91 @@ final class ProductImageService
             throw new RuntimeException('Image trop lourde (2 Mo maximum).');
         }
 
-        // 2. Type MIME réel, lu dans le CONTENU du fichier (signature / « magic bytes ») avec finfo
-        $mime = (new finfo(FILEINFO_MIME_TYPE))->file($tmp);
+        return $this->processAndStoreFile($tmp);
+    }
 
-        // 3. Liste blanche jpg / png / webp
+    public function storeFromUrl(string $url): string
+    {
+        $parsedUrl = parse_url($url);
+        if ($parsedUrl === false || !isset($parsedUrl['scheme'], $parsedUrl['host'])) {
+            throw new RuntimeException('URL invalide.');
+        }
+
+        $scheme = strtolower($parsedUrl['scheme']);
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            throw new RuntimeException('Schéma non autorisé : seuls HTTP et HTTPS sont acceptés.');
+        }
+
+        $host = $parsedUrl['host'];
+
+        $ips = [];
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            $ips[] = $host;
+        } else {
+            $resolved = dns_get_record($host, DNS_A + DNS_AAAA);
+            if (empty($resolved)) {
+                throw new RuntimeException('Impossible de résoudre le nom de domaine de l\'URL distante.');
+            }
+            foreach ($resolved as $record) {
+                if (isset($record['ip'])) $ips[] = $record['ip'];
+                if (isset($record['ipv6'])) $ips[] = $record['ipv6'];
+            }
+        }
+
+        foreach ($ips as $ip) {
+            if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                throw new RuntimeException('Adresse IP interdite (réseau privé ou réservé).');
+            }
+
+            if (str_starts_with($ip, '169.254.') || str_starts_with($ip, 'fe80:')) {
+                throw new RuntimeException('Adresse IP link-local / métadonnées cloud interdite.');
+            }
+        }
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_TIMEOUT        => 5,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_MAXFILESIZE    => self::MAX_SIZE,
+        ]);
+
+        $content = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($content === false || $httpCode !== 200) {
+            throw new RuntimeException('Impossible de récupérer l\'image distante (HTTP ' . $httpCode . ') : ' . $curlError);
+        }
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'img_url_');
+        if ($tmpFile === false || file_put_contents($tmpFile, $content) === false) {
+            throw new RuntimeException('Erreur lors du traitement du fichier temporaire.');
+        }
+
+        try {
+            return $this->processAndStoreFile($tmpFile);
+        } finally {
+            if (file_exists($tmpFile)) {
+                @unlink($tmpFile);
+            }
+        }
+    }
+
+    /**
+     * Traitement mutualisé : Vérification MIME (finfo), taille, renommage sécurisé et stockage.
+     */
+    private function processAndStoreFile(string $filePath): string
+    {
+        if (filesize($filePath) > self::MAX_SIZE) {
+            throw new RuntimeException('Image trop lourde (2 Mo maximum).');
+        }
+
+        // Type MIME réel via les « magic bytes »
+        $mime = (new finfo(FILEINFO_MIME_TYPE))->file($filePath);
+
         $extension = self::ALLOWED_TYPES[$mime] ?? null;
         if ($extension === null) {
             throw new RuntimeException('Format refusé : seuls les fichiers JPG, PNG et WebP sont acceptés.');
@@ -66,31 +147,16 @@ final class ProductImageService
         if (!is_dir(self::STORAGE_DIR)) {
             mkdir(self::STORAGE_DIR, 0775, true);
         }
-        if (!move_uploaded_file($tmp, self::STORAGE_DIR . $filename)) {
+
+        // Si c'est un fichier temporaire issu d'un upload ou d'un téléchargement
+        $moved = is_uploaded_file($filePath)
+            ? move_uploaded_file($filePath, self::STORAGE_DIR . $filename)
+            : rename($filePath, self::STORAGE_DIR . $filename);
+
+        if (!$moved) {
             throw new RuntimeException('Impossible d\'enregistrer le fichier.');
         }
 
         return self::MEDIA_URL . $filename;
-    }
-
-    /** Télécharge une image distante et l'enregistre localement. */
-    public function storeFromUrl(string $url): string
-    {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_TIMEOUT        => 10,
-        ]);
-        $content = curl_exec($ch);
-
-        if ($content === false) {
-            throw new RuntimeException('Impossible de récupérer l\'image distante : ' . curl_error($ch));
-        }
-
-        $filename = basename((string) parse_url($url, PHP_URL_PATH)) ?: 'image';
-        file_put_contents(self::UPLOAD_DIR . $filename, $content);
-
-        return self::PUBLIC_PATH . $filename;
     }
 }
