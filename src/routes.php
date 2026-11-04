@@ -14,6 +14,7 @@ use App\Controllers\DocumentController;
 use App\Controllers\HomeController;
 use App\Controllers\ProductController;
 use App\Controllers\ReviewController;
+use App\Controllers\TrackingController;
 use App\Core\Router;
 
 $router = new Router();
@@ -45,6 +46,9 @@ $router->post('/deconnexion', [AuthController::class, 'logout']);
 $router->get('/compte', [AccountController::class, 'index']);
 $router->post('/compte', [AccountController::class, 'update']);
 $router->get('/compte/commandes/{id}', [AccountController::class, 'order']);
+
+// Suivi de commande par lien signé
+$router->get('/suivi/commandes/{id}', [TrackingController::class, 'show']);
 
 // API JSON
 $router->get('/api/produits', [ProductApiController::class, 'search']);

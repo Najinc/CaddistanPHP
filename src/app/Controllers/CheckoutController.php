@@ -16,7 +16,7 @@ final class CheckoutController extends Controller
 {
     public function index(): Response
     {
-        $this->requireLogin();
+        $this->authorize('order.create');
         $cart = Cart::details();
 
         if ($cart['lines'] === []) {
@@ -29,7 +29,7 @@ final class CheckoutController extends Controller
 
     public function store(): Response
     {
-        $this->requireLogin();
+        $this->authorize('order.create');
         $cart = Cart::details();
 
         if ($cart['lines'] === []) {
@@ -63,9 +63,11 @@ final class CheckoutController extends Controller
 
     public function confirmation(string $id): Response
     {
-        $this->requireLogin();
+        $this->authorize('order.view');
         $orders = new OrderRepository();
         $order = $orders->find($this->routeId($id)) ?? throw HttpException::notFound();
+        // Commande d'un autre client : 404.
+        Auth::authorizeOwner($order);
 
         return $this->view('checkout/confirmation', [
             'title' => 'Commande confirmée',

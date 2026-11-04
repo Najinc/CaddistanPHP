@@ -16,6 +16,7 @@
             <span class="text-lg font-bold text-ink">{{ money((int) $product['price_cents']) }}</span>
             <?php if ((int) $product['stock'] > 0): ?>
                 <form action="/panier/ajouter" method="post" data-add-to-cart>
+                    {!! csrf_field() !!}
                     <input type="hidden" name="product_id" value="{{ (int) $product['id'] }}">
                     <button type="submit" class="btn-primary">Ajouter</button>
                 </form>

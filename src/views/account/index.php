@@ -33,6 +33,7 @@
         <h2 class="text-lg">Mes informations</h2>
         <p class="mt-1 text-sm text-slate-500">{{ $user['email'] }}</p>
         <form action="/compte" method="post" class="mt-4 space-y-4">
+            {!! csrf_field() !!}
             <div>
                 <label for="first_name" class="label">Prénom</label>
                 <input id="first_name" name="first_name" class="input" required value="{{ old('first_name', $user['first_name']) }}">

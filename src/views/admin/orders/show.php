@@ -14,6 +14,7 @@
     <div>{!! partial('order-details', ['order' => $order, 'items' => $items]) !!}</div>
 
     <form action="/admin/commandes/{{ $order['id'] }}/statut" method="post" class="card h-fit space-y-4 p-5">
+        {!! csrf_field() !!}
         <h2 class="text-lg">Changer le statut</h2>
         <select name="status" class="input">
             <?php foreach ($statuses as $s): ?>
