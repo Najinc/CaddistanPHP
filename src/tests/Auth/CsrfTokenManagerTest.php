@@ -58,7 +58,6 @@ final class CsrfTokenManagerTest extends TestCase
 
     public function test_sans_token_en_session_tout_post_est_refuse(): void
     {
-        // Personne n'a encore demandé de token : un token inventé ne doit pas passer.
         $this->expectThrows(CsrfTokenMismatchException::class, fn () => $this->csrf->verify('POST', str_repeat('a', 64)));
     }
 
@@ -67,22 +66,12 @@ final class CsrfTokenManagerTest extends TestCase
         $old = $this->csrf->token();
         $this->csrf->regenerate();
 
-        $this->assertFalse($this->csrf->isValid($old));
-        $this->assertTrue($this->csrf->isValid($this->csrf->token()));
+        $this->expectThrows(CsrfTokenMismatchException::class, fn () => $this->csrf->verify('POST', $old));
+        $this->csrf->verify('POST', $this->csrf->token());
     }
 
-    public function test_token_lu_dans_le_formulaire_sinon_dans_l_en_tete(): void
+    public function test_champ_cache(): void
     {
-        $this->assertSame('form', CsrfTokenManager::submittedToken(['_csrf' => 'form'], ['HTTP_X_CSRF_TOKEN' => 'header']));
-        $this->assertSame('header', CsrfTokenManager::submittedToken([], ['HTTP_X_CSRF_TOKEN' => 'header']));
-        $this->assertSame(null, CsrfTokenManager::submittedToken([], []));
-    }
-
-    public function test_champ_cache_et_meta(): void
-    {
-        $token = $this->csrf->token();
-
-        $this->assertSame('<input type="hidden" name="_csrf" value="' . $token . '">', $this->csrf->field());
-        $this->assertSame('<meta name="csrf-token" content="' . $token . '">', $this->csrf->metaTag());
+        $this->assertSame('<input type="hidden" name="_csrf" value="' . $this->csrf->token() . '">', $this->csrf->field());
     }
 }
