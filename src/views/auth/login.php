@@ -16,6 +16,12 @@
             <button type="submit" class="btn-primary w-full py-2.5">Se connecter</button>
         </form>
 
+        <?php if (App\Mail\Mailer::enabled()): ?>
+            <p class="mt-4 text-center text-sm">
+                <a href="/connexion/sans-mot-de-passe" class="btn-link">Recevoir un lien de connexion par e-mail</a>
+            </p>
+        <?php endif ?>
+
         <p class="mt-6 text-center text-sm text-slate-500">
             Pas encore de compte ? <a href="/inscription" class="btn-link">Inscrivez-vous</a>
         </p>
