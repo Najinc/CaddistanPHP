@@ -6,7 +6,7 @@
         <form action="/connexion" method="post" class="mt-6 space-y-4">
             <div>
                 <label for="email" class="label">Adresse e-mail</label>
-                <input id="email" name="email" type="email" class="input" required autocomplete="email" value="<?= old('email') ?>">
+                <input id="email" name="email" type="email" class="input" required autocomplete="email" value="{{ old('email') }}">
             </div>
             <div>
                 <label for="password" class="label">Mot de passe</label>

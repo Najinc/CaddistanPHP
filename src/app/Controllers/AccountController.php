@@ -6,6 +6,7 @@ use App\Core\Auth;
 use App\Core\HttpException;
 use App\Core\Response;
 use App\Core\Session;
+use App\Core\Validator;
 use App\Repositories\OrderRepository;
 use App\Repositories\UserRepository;
 
@@ -27,14 +28,16 @@ final class AccountController extends Controller
         $this->requireLogin();
         $users = new UserRepository();
 
-        $firstName = $this->request->string('first_name');
-        $lastName  = $this->request->string('last_name');
-        $current   = (string) $this->request->input('current_password', '');
-        $password  = (string) $this->request->input('password', '');
+        $v = $this->validator();
+        $firstName = $v->string('first_name', 'Le prénom', 1, 100, Validator::REGEX_NAME);
+        $lastName  = $v->string('last_name', 'Le nom', 1, 100, Validator::REGEX_NAME);
+        $password  = $v->password('password', 'Le nouveau mot de passe', 8, 72, required: false);
+        $current   = $v->password('current_password', 'Le mot de passe actuel', 1, 72, required: $password !== null);
+        $v->validate();
 
         $users->updateProfile(Auth::id(), $firstName, $lastName);
 
-        if ($password !== '') {
+        if ($password !== null) {
             if ($current !== Auth::user()['password']) {
                 return $this->back('/compte', 'Mot de passe actuel incorrect.');
             }
@@ -50,7 +53,7 @@ final class AccountController extends Controller
     {
         $this->requireLogin();
         $orders = new OrderRepository();
-        $order = $orders->find($id) ?? throw HttpException::notFound('Commande introuvable.');
+        $order = $orders->find($this->routeId($id)) ?? throw HttpException::notFound('Commande introuvable.');
 
         return $this->view('account/order', [
             'title' => 'Commande n°' . $order['id'],

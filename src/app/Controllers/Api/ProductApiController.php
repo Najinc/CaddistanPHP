@@ -14,9 +14,11 @@ final class ProductApiController extends Controller
 {
     public function search(): Response
     {
-        $q = trim((string) $this->request->query('q', ''));
+        $v = $this->queryValidator();
+        $q = $v->string('q', 'La recherche', 1, 100, required: false);
+        $v->validate();
 
-        if ($q === '') {
+        if ($q === null) {
             return $this->json(['data' => []]);
         }
 

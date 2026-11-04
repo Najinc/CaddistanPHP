@@ -16,10 +16,10 @@
     <h2>Nos univers</h2>
     <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <?php foreach ($categories as $category): ?>
-            <a href="/produits?categorie=<?= $category['slug'] ?>" class="card group p-5 transition-shadow hover:shadow-md">
-                <img src="/images/products/<?= $category['slug'] ?>.svg" alt="" class="h-16 transition-transform group-hover:-rotate-6">
-                <h3 class="mt-3 group-hover:text-brand-700"><?= $category['name'] ?></h3>
-                <p class="mt-1 text-sm text-slate-500"><?= (int) $category['products_count'] ?> produit(s)</p>
+            <a href="/produits?categorie={{ $category['slug'] }}" class="card group p-5 transition-shadow hover:shadow-md">
+                <img src="/images/products/{{ $category['slug'] }}.svg" alt="" class="h-16 transition-transform group-hover:-rotate-6">
+                <h3 class="mt-3 group-hover:text-brand-700">{{ $category['name'] }}</h3>
+                <p class="mt-1 text-sm text-slate-500">{{ (int) $category['products_count'] }} produit(s)</p>
             </a>
         <?php endforeach ?>
     </div>
@@ -32,7 +32,7 @@
     </div>
     <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <?php foreach ($products as $product): ?>
-            <?= partial('product-card', ['product' => $product]) ?>
+            {!! partial('product-card', ['product' => $product]) !!}
         <?php endforeach ?>
     </div>
 </section>

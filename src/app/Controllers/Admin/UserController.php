@@ -24,8 +24,11 @@ final class UserController extends Controller
     public function updateRole(string $id): Response
     {
         $users = new UserRepository();
-        $user = $users->find($id) ?? throw HttpException::notFound('Utilisateur introuvable.');
-        $role = $this->request->string('role');
+        $user = $users->find($this->routeId($id)) ?? throw HttpException::notFound('Utilisateur introuvable.');
+
+        $v = $this->validator();
+        $role = $v->in('role', 'Le rôle', self::ROLES);
+        $v->validate();
 
         $users->updateRole($user['id'], $role);
         Session::flash('success', 'Rôle de ' . $user['email'] . ' mis à jour.');

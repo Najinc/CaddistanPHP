@@ -12,7 +12,7 @@ $cartCount = Cart::count();
         </a>
 
         <nav class="hidden items-center gap-1 md:flex">
-            <a href="/produits" class="nav-link <?= is_current('/produits') ? 'is-active' : '' ?>">Catalogue</a>
+            <a href="/produits" class="nav-link {{ is_current('/produits') ? 'is-active' : '' }}">Catalogue</a>
             <a href="/produits?categorie=supermarche" class="nav-link">Supermarché</a>
             <a href="/produits?categorie=golf" class="nav-link">Golf</a>
             <a href="/produits?categorie=logistique" class="nav-link">Logistique</a>
@@ -25,20 +25,20 @@ $cartCount = Cart::count();
         </form>
 
         <div class="ml-auto flex items-center gap-1 sm:ml-0">
-            <a href="/panier" class="nav-link relative <?= is_current('/panier') ? 'is-active' : '' ?>" aria-label="Panier">
+            <a href="/panier" class="nav-link relative {{ is_current('/panier') ? 'is-active' : '' }}" aria-label="Panier">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l2.4 12.2a1 1 0 0 0 1 .8h9.7a1 1 0 0 0 1-.8L21 7H6"/>
                     <circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/>
                 </svg>
-                <span class="absolute -right-0.5 -top-0.5 min-w-5 rounded-full bg-brand-600 px-1 text-center text-xs font-bold leading-5 text-white <?= $cartCount ? '' : 'hidden' ?>"
-                      data-cart-count><?= $cartCount ?></span>
+                <span class="absolute -right-0.5 -top-0.5 min-w-5 rounded-full bg-brand-600 px-1 text-center text-xs font-bold leading-5 text-white {{ $cartCount ? '' : 'hidden' }}"
+                      data-cart-count>{{ $cartCount }}</span>
             </a>
 
             <?php if (Auth::check()): ?>
                 <?php if (Auth::isAdmin()): ?>
-                    <a href="/admin" class="nav-link <?= is_current('/admin') ? 'is-active' : '' ?>">Admin</a>
+                    <a href="/admin" class="nav-link {{ is_current('/admin') ? 'is-active' : '' }}">Admin</a>
                 <?php endif ?>
-                <a href="/compte" class="nav-link <?= is_current('/compte') ? 'is-active' : '' ?>"><?= Auth::user()['first_name'] ?></a>
+                <a href="/compte" class="nav-link {{ is_current('/compte') ? 'is-active' : '' }}">{{ Auth::user()['first_name'] }}</a>
                 <form action="/deconnexion" method="post">
                     <button type="submit" class="nav-link cursor-pointer">Déconnexion</button>
                 </form>

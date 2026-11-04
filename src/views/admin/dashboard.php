@@ -1,5 +1,5 @@
 <?php /** @var array $stats @var int $productsCount @var int $usersCount @var array $latestOrders @var array $lowStock */ ?>
-<?= partial('admin-nav') ?>
+{!! partial('admin-nav') !!}
 <h1>Tableau de bord</h1>
 
 <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -10,8 +10,8 @@
         ['Utilisateurs', $usersCount],
     ] as [$label, $value]): ?>
         <div class="card p-5">
-            <p class="text-sm text-slate-500"><?= $label ?></p>
-            <p class="mt-1 text-2xl font-bold text-ink"><?= $value ?></p>
+            <p class="text-sm text-slate-500">{{ $label }}</p>
+            <p class="mt-1 text-2xl font-bold text-ink">{{ $value }}</p>
         </div>
     <?php endforeach ?>
 </div>
@@ -28,10 +28,10 @@
                 <tbody>
                     <?php foreach ($latestOrders as $order): ?>
                         <tr>
-                            <td><a href="/admin/commandes/<?= $order['id'] ?>" class="btn-link">#<?= $order['id'] ?></a></td>
-                            <td><?= $order['email'] ?></td>
-                            <td><?= money((int) $order['total_cents']) ?></td>
-                            <td><?= partial('order-status', ['status' => $order['status']]) ?></td>
+                            <td><a href="/admin/commandes/{{ $order['id'] }}" class="btn-link">#{{ $order['id'] }}</a></td>
+                            <td>{{ $order['email'] }}</td>
+                            <td>{{ money((int) $order['total_cents']) }}</td>
+                            <td>{!! partial('order-status', ['status' => $order['status']]) !!}</td>
                         </tr>
                     <?php endforeach ?>
                     <?php if ($latestOrders === []): ?>
@@ -47,8 +47,8 @@
         <ul class="mt-3 divide-y divide-slate-100 text-sm">
             <?php foreach ($lowStock as $product): ?>
                 <li class="flex justify-between py-2">
-                    <a href="/admin/produits/<?= $product['id'] ?>/modifier" class="hover:text-brand-700"><?= $product['name'] ?></a>
-                    <span class="badge <?= $product['stock'] == 0 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800' ?>"><?= $product['stock'] ?></span>
+                    <a href="/admin/produits/{{ $product['id'] }}/modifier" class="hover:text-brand-700">{{ $product['name'] }}</a>
+                    <span class="badge {{ $product['stock'] == 0 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800' }}">{{ $product['stock'] }}</span>
                 </li>
             <?php endforeach ?>
             <?php if ($lowStock === []): ?>
