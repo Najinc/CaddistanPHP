@@ -6,12 +6,12 @@ final class UserRepository extends Repository
 {
     public function find($id): ?array
     {
-        return $this->fetchOne("SELECT * FROM users WHERE id = $id");
+        return $this->fetchOne('SELECT id, first_name, last_name, role FROM users WHERE id = ?', [$id]);
     }
 
     public function findByEmail(string $email): ?array
     {
-        return $this->fetchOne("SELECT * FROM users WHERE email = '$email'");
+        return $this->fetchOne('SELECT id, first_name, last_name, role FROM users WHERE email = ?', [$email]);
     }
 
     public function findByCredentials(string $email, string $password): ?array
@@ -31,8 +31,9 @@ final class UserRepository extends Repository
     public function create(string $email, string $password, string $firstName, string $lastName): int
     {
         $this->execute(
-            "INSERT INTO users (email, password, first_name, last_name)
-             VALUES ('$email', '$password', '$firstName', '$lastName')"
+            'INSERT INTO users (email, password, first_name, last_name)
+             VALUES (?, ?, ?, ?)',
+            [$email, $password, $firstName, $lastName]
         );
 
         return (int) $this->db->lastInsertId();
@@ -40,21 +41,30 @@ final class UserRepository extends Repository
 
     public function updateProfile($id, string $firstName, string $lastName): void
     {
-        $this->execute("UPDATE users SET first_name = '$firstName', last_name = '$lastName' WHERE id = $id");
+        $this->execute(
+            'UPDATE users SET first_name = ?, last_name = ? WHERE id = ?',
+            [$firstName, $lastName, $id]
+        );
     }
 
     public function updatePassword($id, string $password): void
     {
-        $this->execute("UPDATE users SET password = '$password' WHERE id = $id");
+        $this->execute(
+            'UPDATE users SET password = ? WHERE id = ?',
+            [$password, $id]
+        );
     }
 
     public function updateRole($id, string $role): void
     {
-        $this->execute("UPDATE users SET role = '$role' WHERE id = $id");
+        $this->execute(
+            'UPDATE users SET role = ? WHERE id = ?',
+            [$role, $id]
+        );
     }
 
     public function count(): int
     {
-        return (int) $this->db->query('SELECT COUNT(*) FROM users')->fetchColumn();
+        return (int) $this->executeQuery('SELECT COUNT(*) FROM users', [])->fetchColumn();
     }
 }
