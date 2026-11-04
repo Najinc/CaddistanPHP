@@ -15,6 +15,8 @@ final class ProductController extends Controller
 {
     public function index(): Response
     {
+        $this->authorize('caddy.edit');
+
         return $this->view('admin/products/index', [
             'title'    => 'Produits',
             'products' => (new ProductRepository())->allForAdmin(),
@@ -23,6 +25,8 @@ final class ProductController extends Controller
 
     public function create(): Response
     {
+        $this->authorize('caddy.create');
+
         return $this->view('admin/products/form', [
             'title'      => 'Nouveau produit',
             'product'    => null,
@@ -32,6 +36,7 @@ final class ProductController extends Controller
 
     public function store(): Response
     {
+        $this->authorize('caddy.create');
         $products = new ProductRepository();
         $data = $this->formData($products);
 
@@ -49,6 +54,8 @@ final class ProductController extends Controller
 
     public function edit(string $id): Response
     {
+        $this->authorize('caddy.edit');
+
         return $this->view('admin/products/form', [
             'title'      => 'Modifier un produit',
             'product'    => $this->findOrFail($id),
@@ -58,6 +65,7 @@ final class ProductController extends Controller
 
     public function update(string $id): Response
     {
+        $this->authorize('caddy.edit');
         $products = new ProductRepository();
         $product = $this->findOrFail($id);
         $data = $this->formData($products, $product['id']);
@@ -76,6 +84,7 @@ final class ProductController extends Controller
 
     public function destroy(string $id): Response
     {
+        $this->authorize('caddy.delete');
         $product = $this->findOrFail($id);
 
         (new ProductRepository())->delete($product['id']);

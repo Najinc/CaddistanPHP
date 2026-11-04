@@ -4,6 +4,7 @@
         <p class="mt-1 text-sm text-slate-500">Content de vous revoir au Caddistan.</p>
 
         <form action="/connexion" method="post" class="mt-6 space-y-4">
+            {!! csrf_field() !!}
             <div>
                 <label for="email" class="label">Adresse e-mail</label>
                 <input id="email" name="email" type="email" class="input" required autocomplete="email" value="{{ old('email') }}">

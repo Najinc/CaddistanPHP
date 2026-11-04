@@ -4,6 +4,7 @@
         <p class="mt-1 text-sm text-slate-500">Rejoignez le peuple du Caddistan.</p>
 
         <form action="/inscription" method="post" class="mt-6 space-y-4">
+            {!! csrf_field() !!}
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label for="first_name" class="label">Prénom</label>
