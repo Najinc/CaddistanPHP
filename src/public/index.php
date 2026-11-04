@@ -7,6 +7,8 @@
 
 declare(strict_types=1);
 
+use App\Auth\Csrf\CsrfTokenManager;
+use App\Core\Auth;
 use App\Core\HttpException;
 use App\Core\Request;
 use App\Core\Response;
@@ -18,7 +20,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 // Variables lues depuis le .env (à la racine du projet, hors webroot, ignoré par git, injecté par Docker Compose).
 // Si l'une manque, on s'arrête tout de suite plutôt que de tourner avec une config bancale.
-require_env(['APP_URL', 'DB_HOST', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD']);
+require_env(['APP_URL', 'APP_KEY', 'DB_HOST', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD']);
 
 Session::start();
 
@@ -26,6 +28,9 @@ $request = Request::fromGlobals();
 $router = require __DIR__ . '/../routes.php';
 
 try {
+    // Tout POST doit porter le token CSRF de la session, sinon 403.
+    Auth::csrf()->verify($request->method, $request->input(CsrfTokenManager::FIELD));
+
     $response = $router->dispatch($request);
 } catch (ValidationException $e) {
     $response = handleValidationException($e, $request);

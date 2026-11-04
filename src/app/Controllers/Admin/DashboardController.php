@@ -12,6 +12,7 @@ final class DashboardController extends Controller
 {
     public function index(): Response
     {
+        $this->authorize('admin.dashboard');
         $orders = new OrderRepository();
         $products = new ProductRepository();
 

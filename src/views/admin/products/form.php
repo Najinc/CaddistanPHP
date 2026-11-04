@@ -8,6 +8,7 @@ $action = $product ? '/admin/produits/' . $product['id'] : '/admin/produits';
 <h1 class="mt-2">{{ $product ? 'Modifier « ' . $product['name'] . ' »' : 'Nouveau produit' }}</h1>
 
 <form action="{{ $action }}" method="post" enctype="multipart/form-data" class="mt-6 grid gap-8 lg:grid-cols-[1fr_320px]">
+    {!! csrf_field() !!}
     <div class="card space-y-4 p-6">
         <div class="grid gap-4 sm:grid-cols-2">
             <div>

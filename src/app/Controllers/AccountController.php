@@ -35,13 +35,17 @@ final class AccountController extends Controller
         $current   = $v->password('current_password', 'Le mot de passe actuel', 1, 72, required: $password !== null);
         $v->validate();
 
+        // Vérifié avant d'enregistrer quoi que ce soit.
+        if ($password !== null && !Auth::checkPassword($current)) {
+            return $this->back('/compte', 'Mot de passe actuel incorrect.');
+        }
+
         $users->updateProfile(Auth::id(), $firstName, $lastName);
 
         if ($password !== null) {
-            if ($current !== Auth::user()['password']) {
-                return $this->back('/compte', 'Mot de passe actuel incorrect.');
-            }
-            $users->updatePassword(Auth::id(), $password);
+            $users->updatePassword(Auth::id(), Auth::hashPassword($password));
+            // Une session volée avant le changement ne sert plus.
+            Auth::renewSession();
         }
 
         Session::flash('success', 'Profil mis à jour.');
@@ -51,14 +55,17 @@ final class AccountController extends Controller
 
     public function order(string $id): Response
     {
-        $this->requireLogin();
+        $this->authorize('order.view');
         $orders = new OrderRepository();
         $order = $orders->find($this->routeId($id)) ?? throw HttpException::notFound('Commande introuvable.');
+        // Commande d'un autre client : 404.
+        Auth::authorizeOwner($order);
 
         return $this->view('account/order', [
-            'title' => 'Commande n°' . $order['id'],
-            'order' => $order,
-            'items' => $orders->items($order['id']),
+            'title'       => 'Commande n°' . $order['id'],
+            'order'       => $order,
+            'items'       => $orders->items($order['id']),
+            'trackingUrl' => TrackingController::linkFor((int) $order['id']),
         ]);
     }
 }
