@@ -52,10 +52,26 @@ Si une étape échoue (produit retiré, stock insuffisant, paiement refusé, pan
 Le paiement simulé refuse au-delà de **10 000 €** (`SimulatedPaymentGateway::CEILING_CENTS`), pour la démo du rollback.
 Seuls les messages de `OrderException` sont montrés au client. Avant, `catch (RuntimeException)` affichait aussi les `PDOException` (du SQL) dans le message flash.
 
+## En-têtes de sécurité (repris de la Partie 4)
+
+`Core/SecurityHeaders`, ajouté par `Response::send()` à **toutes** les réponses PHP. Les fichiers statiques reçoivent les mêmes en-têtes via Caddy (`docker/caddy/Caddyfile`, en valeurs par défaut `?`, qui n'écrasent pas celles de PHP).
+
+| En-tête | Valeur | Pourquoi |
+|---|---|---|
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | Le navigateur refuse le HTTP pendant 1 an (pas de SSL stripping). Pas de `preload`, difficile à annuler. |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'nonce-…' 'strict-dynamic'; … frame-ancestors 'none'` | Un script injecté (XSS) n'a pas le nonce, il ne s'exécute pas. Ni `unsafe-inline`, ni `unsafe-eval`. |
+| `X-Frame-Options` | `DENY` | Anti-clickjacking pour les anciens navigateurs (`frame-ancestors` pour les récents). |
+| `X-Content-Type-Options` | `nosniff` | Le navigateur ne devine pas le type : un upload ne peut pas devenir du HTML ou du JS. |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Les sites tiers ne reçoivent que l'origine, jamais le chemin ni les tokens. `no-referrer` casserait `Controller::back()`. |
+
+- Le nonce fait 128 bits aléatoires et change à chaque requête (`SecurityHeaders::nonce()`). `Vite::vite()` le met sur chaque `<script>` et `<link rel="modulepreload">`, ainsi que dans `<meta property="csp-nonce">`, que le client Vite lit en dev pour ses `<style>`.
+- Toute nouvelle balise `<script>` dans une vue doit porter `nonce="{{ \App\Core\SecurityHeaders::nonce() }}"`, sinon elle est bloquée. De même, aucun `onclick=` ni `style=` inline.
+- Une réponse peut durcir un en-tête avec `withHeader()` (ex : `default-src 'none'; sandbox` pour un fichier servi).
+
 ## Tester
 
 ```sh
-docker compose exec app php tests/Robustness/run.php     # 31 tests
+docker compose exec app php tests/Robustness/run.php     # 36 tests
 ```
 
 `OrderPlacementTest` utilise la vraie base, puis remet le stock et supprime ses commandes à la fin.
