@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace App\Auth;
 
-/**
- * Hachage Argon2id : lent exprès, pour qu'un attaquant qui vole la base
- * ne puisse tester que peu de mots de passe par seconde. Le sel est inclus dans le hash.
- */
+/** Argon2id : lent exprès, pour ralentir le cassage des mots de passe si la base fuite. */
 final class PasswordHasher
 {
-    /** @param array $options paramètres Argon2id : ceux de PHP par défaut, plus légers dans les tests */
+    /** @param array $options paramètres Argon2id (plus légers dans les tests) */
     public function __construct(private readonly array $options = [])
     {
     }
@@ -25,7 +22,6 @@ final class PasswordHasher
         return password_verify($password, $hash);
     }
 
-    /** Vrai si le hash vient d'un autre algorithme ou d'autres paramètres : il faut le refaire. */
     public function needsRehash(string $hash): bool
     {
         return password_needs_rehash($hash, PASSWORD_ARGON2ID, $this->options);

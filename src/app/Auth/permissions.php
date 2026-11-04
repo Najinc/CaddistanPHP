@@ -2,25 +2,24 @@
 
 declare(strict_types=1);
 
-// Rôle => permissions. Le code vérifie toujours une permission, jamais un rôle.
-// Les rôles sont ceux de la colonne users.role (ENUM 'customer', 'admin').
+// Rôle (colonne users.role) => permissions. Le code vérifie toujours une permission, jamais un rôle.
 return [
     'customer' => [
-        'order.create',         // passer commande
-        'order.view',           // voir ses propres commandes (la propriété est vérifiée en plus)
-        'review.create',        // laisser un avis
+        'order.create',
+        'order.view',           // ses propres commandes uniquement
+        'review.create',
     ],
     'admin' => [
         'order.create',
         'order.view',
         'review.create',
-        'admin.dashboard',      // tableau de bord /admin
-        'caddy.create',         // créer un produit
-        'caddy.edit',           // lister et modifier les produits
-        'caddy.delete',         // supprimer un produit
-        'order.view_any',       // voir les commandes de tous les clients
-        'order.update_status',  // changer le statut d'une commande
-        'user.view_any',        // lister les utilisateurs
-        'user.change_role',     // changer le rôle d'un utilisateur
+        'admin.dashboard',
+        'caddy.create',
+        'caddy.edit',
+        'caddy.delete',
+        'order.view_any',       // les commandes de tous les clients (back-office)
+        'order.update_status',
+        'user.view_any',
+        'user.change_role',
     ],
 ];

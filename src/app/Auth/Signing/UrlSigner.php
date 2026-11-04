@@ -7,26 +7,21 @@ namespace App\Auth\Signing;
 use App\Auth\Exception\InvalidSignatureException;
 
 /**
- * URL signées : un lien qui donne accès à une page précise, sans session, pendant un temps limité.
- *
- *   "/commandes/12/facture"  →  "/commandes/12/facture?expires=1767225600&signature=3f9a…"
- *
- * La signature est un HMAC-SHA256 de tout ce qui la précède, calculé avec APP_KEY.
- * Changer un seul caractère (l'id, la date…) rend la signature fausse.
+ * "/suivi/commandes/12" devient "/suivi/commandes/12?expires=…&signature=…".
+ * La signature est un HMAC-SHA256 de tout ce qui la précède, avec APP_KEY :
+ * changer un seul caractère la rend fausse.
  */
 final class UrlSigner
 {
-    /** @param \Closure|null $clock horloge remplaçable dans les tests */
     public function __construct(
         #[\SensitiveParameter] private readonly string $key,
-        private readonly ?\Closure $clock = null,
+        private readonly ?\Closure $clock = null, // horloge remplaçable dans les tests
     ) {
         if (strlen($key) < 32) {
             throw new \InvalidArgumentException('APP_KEY trop courte : il faut au moins 32 octets aléatoires.');
         }
     }
 
-    /** $url : chemin local déjà encodé, avec ou sans paramètres. */
     public function sign(string $url, int $ttlSeconds): string
     {
         $url .= (str_contains($url, '?') ? '&' : '?') . 'expires=' . ($this->now() + $ttlSeconds);
@@ -34,21 +29,17 @@ final class UrlSigner
         return $url . '&signature=' . $this->hmac($url);
     }
 
-    /**
-     * Vérifie l'URL reçue (typiquement $_SERVER['REQUEST_URI']) et renvoie ses paramètres.
-     *
-     * @return array<string, string>
-     */
+    /** @return array<string, string> les paramètres de l'URL */
     public function verify(string $url): array
     {
-        // La signature est toujours à la fin : tout ce qui est avant est signé.
+        // La signature est toujours en dernier : tout ce qui précède est signé.
         $parts = explode('&signature=', $url, 2);
         if (count($parts) !== 2) {
             throw new InvalidSignatureException('missing');
         }
         [$signedPart, $signature] = $parts;
 
-        // hash_equals compare en temps constant : on ne peut pas deviner la signature caractère par caractère.
+        // hash_equals : comparaison en temps constant.
         if (!hash_equals($this->hmac($signedPart), $signature)) {
             throw new InvalidSignatureException('invalid');
         }

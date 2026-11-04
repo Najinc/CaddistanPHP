@@ -6,7 +6,6 @@ namespace App\Auth\Exception;
 
 use App\Core\HttpException;
 
-/** Personne n'est connecté : 401 (redirection vers /connexion). */
 final class AuthenticationException extends HttpException
 {
     public function __construct()
