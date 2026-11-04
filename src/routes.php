@@ -47,7 +47,7 @@ $router->get('/compte', [AccountController::class, 'index']);
 $router->post('/compte', [AccountController::class, 'update']);
 $router->get('/compte/commandes/{id}', [AccountController::class, 'order']);
 
-// Suivi de commande par lien signé (sans compte, expire au bout de 7 jours)
+// Suivi de commande par lien signé
 $router->get('/suivi/commandes/{id}', [TrackingController::class, 'show']);
 
 // API JSON

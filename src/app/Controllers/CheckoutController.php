@@ -62,7 +62,7 @@ final class CheckoutController extends Controller
         $this->authorize('order.view');
         $orders = new OrderRepository();
         $order = $orders->find($this->routeId($id)) ?? throw HttpException::notFound();
-        // Anti-IDOR : /commande/confirmation/{id} d'un autre client répond 404.
+        // Commande d'un autre client : 404.
         Auth::authorizeOwner($order);
 
         return $this->view('checkout/confirmation', [

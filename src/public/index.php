@@ -28,7 +28,7 @@ $request = Request::fromGlobals();
 $router = require __DIR__ . '/../routes.php';
 
 try {
-    // Toute requête qui modifie l'état (POST…) doit porter le token CSRF de la session, sinon 403.
+    // Tout POST doit porter le token CSRF de la session, sinon 403.
     Auth::csrf()->verify($request->method, $request->input(CsrfTokenManager::FIELD));
 
     $response = $router->dispatch($request);

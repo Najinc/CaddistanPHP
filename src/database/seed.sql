@@ -1,6 +1,6 @@
 -- Données de démonstration
 -- Comptes : admin@caddistan.local / Admin123!   client@caddistan.local / Client123!
--- Les mots de passe sont stockés hachés en Argon2id (password_hash), jamais en clair.
+-- Mots de passe stockés en Argon2id.
 SET NAMES utf8mb4;
 
 INSERT INTO users (email, password, first_name, last_name, role) VALUES

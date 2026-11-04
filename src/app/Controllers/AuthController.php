@@ -30,7 +30,7 @@ final class AuthController extends Controller
 
         if (!Auth::attempt($email, $password)) {
             Session::flashInput(['email' => $email]);
-            // Même message que l'e-mail existe ou non : on ne révèle pas quels comptes existent.
+            // Même message que l'e-mail existe ou non.
             Session::flash('error', Authenticator::FAILURE_MESSAGE);
             return $this->redirect('/connexion');
         }
@@ -87,7 +87,7 @@ final class AuthController extends Controller
         return $this->redirect('/');
     }
 
-    /** Redirige vers la page demandée avant la connexion, uniquement si c'est une page du site (anti open redirect). */
+    /** Redirige vers la page demandée avant la connexion, si c'est bien une page du site. */
     private function redirectIntended(): Response
     {
         $target = SafeRedirect::target(Session::get('intended'), '/compte');

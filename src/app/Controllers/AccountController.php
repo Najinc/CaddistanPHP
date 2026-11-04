@@ -35,7 +35,7 @@ final class AccountController extends Controller
         $current   = $v->password('current_password', 'Le mot de passe actuel', 1, 72, required: $password !== null);
         $v->validate();
 
-        // Vérifié AVANT toute modification : un mauvais mot de passe actuel n'enregistre rien.
+        // Vérifié avant d'enregistrer quoi que ce soit.
         if ($password !== null && !Auth::checkPassword($current)) {
             return $this->back('/compte', 'Mot de passe actuel incorrect.');
         }
@@ -44,7 +44,7 @@ final class AccountController extends Controller
 
         if ($password !== null) {
             $users->updatePassword(Auth::id(), Auth::hashPassword($password));
-            // Nouvel ID de session : une session volée avant le changement ne vaut plus rien.
+            // Une session volée avant le changement ne sert plus.
             Auth::renewSession();
         }
 
@@ -58,7 +58,7 @@ final class AccountController extends Controller
         $this->authorize('order.view');
         $orders = new OrderRepository();
         $order = $orders->find($this->routeId($id)) ?? throw HttpException::notFound('Commande introuvable.');
-        // Anti-IDOR : la commande d'un autre client répond 404, comme une commande qui n'existe pas.
+        // Commande d'un autre client : 404.
         Auth::authorizeOwner($order);
 
         return $this->view('account/order', [
