@@ -136,7 +136,7 @@ final class ProductRepository extends Repository
             ]
         );
 
-        return (int) $this->db->lastInsertId();
+        return (int) $this->lastInsertId();
     }
 
     public function update($id, array $d): void
@@ -177,7 +177,7 @@ final class ProductRepository extends Repository
 
     public function count(): int
     {
-        return (int) $this->db->query('SELECT COUNT(*) FROM products')->fetchColumn();
+        return (int) $this->executeQuery('SELECT COUNT(*) FROM products', [])->fetchColumn();
     }
 
     public function lowStock(int $threshold = 10): array

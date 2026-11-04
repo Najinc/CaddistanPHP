@@ -14,11 +14,6 @@ final class UserRepository extends Repository
         return $this->fetchOne('SELECT id, first_name, last_name, role FROM users WHERE email = ?', [$email]);
     }
 
-    public function findByCredentials(string $email, string $password): ?array
-    {
-        return $this->fetchOne("SELECT * FROM users WHERE email = '$email' AND password = '$password'");
-    }
-
     public function all(): array
     {
         return $this->fetchAll(
