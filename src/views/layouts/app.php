@@ -1,6 +1,7 @@
 <?php
 /** @var string $content */
 use App\Core\Session;
+use App\Mail\Mailer;
 use App\Vite;
 ?>
 <!DOCTYPE html>
@@ -23,5 +24,9 @@ use App\Vite;
     </main>
 
     {!! partial('footer') !!}
+
+    <?php if (Mailer::enabled()): ?>
+        {!! partial('mail-widget') !!}
+    <?php endif ?>
 </body>
 </html>
