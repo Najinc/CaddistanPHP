@@ -17,7 +17,7 @@
 | Bonus : magic links | `MagicLink` (non branché : pas d'envoi d'email) | `MagicLinkTest` |
 | En plus : pas d'open redirect après le login | `SafeRedirect` | `SafeRedirectTest` |
 
-Tests : **62 tests unitaires** (`php tests/Auth/run.php`). J'ai aussi joué un scénario de bout en bout
+Tests : **60 tests unitaires** (`php tests/Auth/run.php`). J'ai aussi joué un scénario de bout en bout
 contre le vrai site (php -S + SQLite à la place de MariaDB, pas versionné) : **47 vérifications sur 47,
 aucun avertissement PHP**.
 
@@ -63,7 +63,7 @@ aucun avertissement PHP**.
 | `Authenticatable.php` | Interface d'un utilisateur : id, hash du mot de passe, rôle. |
 | `UserProviderInterface.php` | Interface d'accès aux utilisateurs : par id, par email, mise à jour du hash. |
 | `PasswordHasher.php` | `password_hash` / `password_verify` / `password_needs_rehash` en Argon2id (paramètres réglables pour les tests). |
-| `Authenticator.php` | `attempt()` (timing constant, rehash), `login()` (régénère l'ID et le token CSRF), `logout()`, `user()` (relu en base à chaque requête : un rôle modifié s'applique tout de suite), `normalizeEmail()`. |
+| `Authenticator.php` | `attempt()` (timing constant, rehash), `login()` (régénère l'ID et le token CSRF), `logout()`, `user()` (relu en base à chaque requête : un rôle modifié s'applique tout de suite). L'email est mis en minuscules avant la recherche. |
 | `Session/SessionInterface.php` | Ce dont la Partie 3 a besoin d'une session : get, set, regenerate, destroy. |
 | `Session/NativeSession.php` | Session PHP réglée dans le code (pas de dépendance au php.ini) : cookie `__Host-`, HttpOnly, Secure, SameSite=Lax, `use_strict_mode`, timeout d'inactivité, destruction complète avec suppression du cookie. |
 | `Csrf/CsrfTokenManager.php` | Token de 32 octets aléatoires par session, `verify()` avec `hash_equals` sur toute méthode sauf GET/HEAD/OPTIONS, `regenerate()` au login, `field()` pour les formulaires. |
@@ -90,7 +90,7 @@ Ce sont les endroits que le README de Louis attribue à la Partie 3 (« Où ça 
 | Fichier | Modification |
 |---|---|
 | `app/Core/Auth.php` | Réécrit : même API statique, mais délègue à `Authenticator`, `Gate`, `CsrfTokenManager`, `PasswordHasher`, `UrlSigner`. `user()` ne renvoie plus le hash. `isAdmin()` remplacé par `can()` / `authorize()` / `authorizeOwner()`. |
-| `app/Core/Session.php` | `start()`, `regenerate()` et `destroy()` passent par `NativeSession`. Les flashs ne changent pas. |
+| `app/Core/Session.php` | `start()` et `destroy()` passent par `NativeSession`. Les flashs ne changent pas. |
 | `app/Controllers/Controller.php` | Ajout de `authorize($permission)`. |
 | `app/Controllers/AuthController.php` | Hash à l'inscription, message d'échec unique, `SafeRedirect` sur la page demandée avant connexion. |
 | `app/Controllers/AccountController.php` | Mot de passe actuel vérifié avec `password_verify` **avant** d'enregistrer quoi que ce soit, nouveau hash, nouvelle session. Propriété des commandes, lien de suivi. |
