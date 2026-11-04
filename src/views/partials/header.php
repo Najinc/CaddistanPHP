@@ -40,6 +40,7 @@ $cartCount = Cart::count();
                 <?php endif ?>
                 <a href="/compte" class="nav-link {{ is_current('/compte') ? 'is-active' : '' }}">{{ Auth::user()['first_name'] }}</a>
                 <form action="/deconnexion" method="post">
+                    {!! csrf_field() !!}
                     <button type="submit" class="nav-link cursor-pointer">Déconnexion</button>
                 </form>
             <?php else: ?>

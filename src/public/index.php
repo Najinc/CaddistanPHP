@@ -7,6 +7,8 @@
 
 declare(strict_types=1);
 
+use App\Auth\Csrf\CsrfTokenManager;
+use App\Core\Auth;
 use App\Core\HttpException;
 use App\Core\Request;
 use App\Core\Response;
@@ -26,6 +28,9 @@ $request = Request::fromGlobals();
 $router = require __DIR__ . '/../routes.php';
 
 try {
+    // Toute requête qui modifie l'état (POST…) doit porter le token CSRF de la session, sinon 403.
+    Auth::csrf()->verify($request->method, $request->input(CsrfTokenManager::FIELD));
+
     $response = $router->dispatch($request);
 } catch (ValidationException $e) {
     $response = handleValidationException($e, $request);
