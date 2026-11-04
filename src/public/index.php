@@ -7,9 +7,13 @@
 
 declare(strict_types=1);
 
+use App\Core\Auth;
+use App\Core\Cache;
 use App\Core\ExceptionHandler;
+use App\Core\RateLimiter;
 use App\Core\Request;
 use App\Core\Session;
+use App\Core\Throttle;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -25,9 +29,13 @@ Session::start();
 
 $request = Request::fromGlobals();
 $router = require __DIR__ . '/../routes.php';
+$throttle = new Throttle(new RateLimiter(new Cache()));
 
 try {
+    $wasGuest = !Auth::check();
+    $throttle->before($request);            // 429 + Retry-After si la limite est dépassée
     $response = $router->dispatch($request);
+    $throttle->after($request, $wasGuest);  // login réussi : remise à zéro du compteur du compte
 } catch (Throwable $e) {
     $response = $handler->handle($e, $request);
 }
