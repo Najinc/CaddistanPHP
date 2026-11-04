@@ -24,7 +24,23 @@ final class Router
     {
         preg_match_all('#\{(\w+)\}#', $path, $matches);
 
-        $pattern = preg_replace('#\{\w+\}#', '([^/]+)', rtrim($path, '/') ?: '/');
+        $pattern = preg_replace_callback('#\{(\w+)\}#', function ($m) {
+            $paramName = $m[1];
+
+            if ($paramName === 'id' || str_ends_with($paramName, '_id')) {
+                return '(\d+)';
+            }
+
+            if ($paramName === 'slug') {
+                return '([\w-]+)';
+            }
+
+            if ($paramName === 'filename') {
+                return '([a-zA-Z0-9_.-]+)';
+            }
+
+            return '([^/]+)';
+        }, rtrim($path, '/') ?: '/');
 
         $this->routes[$method][] = [
             'pattern' => '#^' . $pattern . '$#',
