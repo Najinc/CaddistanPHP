@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Core\SecurityHeaders;
 use RuntimeException;
 
 /**
@@ -15,7 +16,7 @@ use RuntimeException;
  * 
  * Sortie après un npm run build :
  * <link rel="stylesheet" href="/dist/assets/main-Cv8k2n_S.css">
- * <script type="module" src="/dist/assets/main-CbXgiLKm.js"></script>
+ * <script type="module" nonce="…" src="/dist/assets/main-CbXgiLKm.js"></script>
  *
  * Sortie en hot reload :
  * <script type="module" src="https://secuweb.local/@vite/client"></script>
@@ -28,13 +29,26 @@ final class Vite
 
     /**
      * Génère les tags HTML script et style JS et CSS 
+     *
+     * Chaque <script> et <link rel="modulepreload"> porte le nonce CSP de la requête (sinon la CSP le bloque).
+     * La balise <meta property="csp-nonce"> est lue par Vite, qui ajoute le nonce aux balises qu'il crée
+     * lui-même (<style> du CSS en dev, préchargement des modules).
      */
     public static function vite(string $entry): string
     {   
+        $nonce = self::nonceAttribute();
+        $meta  = '<meta property="csp-nonce"' . $nonce . '>' . "\n";
+
         if (self::isDev())
-            return self::devTags($entry);
+            return $meta . self::devTags($entry, $nonce);
         
-        return self::buildTags($entry);
+        return $meta . self::buildTags($entry, $nonce);
+    }
+
+    /** ' nonce="..."' (base64 : seulement A-Z a-z 0-9 + / =, échappé quand même). */
+    private static function nonceAttribute(): string
+    {
+        return ' nonce="' . htmlspecialchars(SecurityHeaders::nonce(), ENT_QUOTES) . '"';
     }
 
     private static function getHotFilePath(): string
@@ -61,18 +75,18 @@ final class Vite
         return rtrim($url, '/');
     }
 
-    private static function devTags(string $entry): string
+    private static function devTags(string $entry, string $nonce): string
     {
         $server = htmlspecialchars(self::getDevServerURL(), ENT_QUOTES);
         $entry  = htmlspecialchars(ltrim($entry, '/'), ENT_QUOTES);
 
         return <<<HTML
-            <script type="module" src="{$server}/@vite/client"></script>
-            <script type="module" src="{$server}/{$entry}"></script>
+            <script type="module"{$nonce} src="{$server}/@vite/client"></script>
+            <script type="module"{$nonce} src="{$server}/{$entry}"></script>
             HTML;
     }
 
-    private static function buildTags(string $entry): string
+    private static function buildTags(string $entry, string $nonce): string
     {
         $manifest = self::getManifestJSON();
 
@@ -87,13 +101,13 @@ final class Vite
         }
 
         foreach ($chunk['imports'] ?? [] as $import) {
-            $tags[] = '<link rel="modulepreload" href="' . self::BASE_URL . $manifest[$import]['file'] . '">';
+            $tags[] = '<link rel="modulepreload"' . $nonce . ' href="' . self::BASE_URL . $manifest[$import]['file'] . '">';
             foreach ($manifest[$import]['css'] ?? [] as $css) {
                 $tags[] = '<link rel="stylesheet" href="' . self::BASE_URL . $css . '">';
             }
         }
 
-        $tags[] = '<script type="module" src="' . self::BASE_URL . $chunk['file'] . '"></script>';
+        $tags[] = '<script type="module"' . $nonce . ' src="' . self::BASE_URL . $chunk['file'] . '"></script>';
         return implode("\n", $tags);
     }
 
