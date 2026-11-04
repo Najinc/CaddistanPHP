@@ -16,6 +16,17 @@
         ?Referrer-Policy "strict-origin-when-cross-origin"
     }
 
+    # Upload : un corps de requête trop gros est coupé ici, avant PHP (un tar.gz de 1 Go ne va pas plus loin).
+    # Sous le post_max_size de PHP (10M) : au-delà, PHP vide le formulaire et affiche un warning.
+    # La limite des images (2 Mo) reste vérifiée dans ProductImageService.
+    request_body {
+        max_size 8MB
+    }
+
+    handle_errors 413 {
+        respond "Fichier trop lourd : 2 Mo maximum pour une image." 413
+    }
+
     respond /hot 404
 
     # Websocket Vite (HMR)
