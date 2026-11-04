@@ -61,7 +61,8 @@ $action = $product ? '/admin/produits/' . $product['id'] : '/admin/produits';
             <?php endif ?>
             <div>
                 <label for="image" class="label">Envoyer un fichier</label>
-                <input id="image" name="image" type="file" accept="image/*" class="block w-full text-sm">
+                <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp" class="block w-full text-sm">
+                <p class="mt-1 text-xs text-slate-500">JPG, PNG ou WebP, 2 Mo maximum.</p>
             </div>
             <div>
                 <label for="image_url" class="label">… ou importer depuis une URL</label>
