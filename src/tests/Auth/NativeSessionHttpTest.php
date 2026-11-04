@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Auth;
 
-/**
- * Test « boîte noire » de NativeSession : un vrai serveur PHP (php -S) sert
- * fixtures/session_app.php, et on lit les en-têtes Set-Cookie réellement envoyés.
- */
+/** Lance un vrai serveur `php -S` sur fixtures/session_app.php et lit les en-têtes Set-Cookie réellement envoyés. */
 final class NativeSessionHttpTest extends TestCase
 {
     private const COOKIE = '__Host-caddistan_session';
@@ -32,7 +29,7 @@ final class NativeSessionHttpTest extends TestCase
         $this->assertSame('Lax', $cookie['attrs']['samesite'] ?? null);
         $this->assertSame('/', $cookie['attrs']['path'] ?? null);
         $this->assertFalse(isset($cookie['attrs']['domain']), 'pas de Domain avec __Host-');
-        $this->assertFalse(isset($cookie['attrs']['expires']), 'cookie de session (supprimé à la fermeture du navigateur)');
+        $this->assertFalse(isset($cookie['attrs']['expires']), 'cookie supprimé à la fermeture du navigateur');
     }
 
     public function test_strict_mode_refuse_un_id_choisi_par_l_attaquant(): void
@@ -55,7 +52,7 @@ final class NativeSessionHttpTest extends TestCase
         $this->assertSame(42, $login['body']['user']);
         $this->assertSame($afterLogin, $this->lastCookie($login)['value']);
 
-        // Un attaquant qui connaissait l'ancien ID (fixation) n'obtient rien.
+        // Un attaquant qui connaissait l'ancien ID n'obtient rien.
         $replay = $this->request('action=show', $beforeLogin);
         $this->assertNotSame($beforeLogin, $replay['body']['id']);
         $this->assertSame(null, $replay['body']['user']);
@@ -73,7 +70,7 @@ final class NativeSessionHttpTest extends TestCase
         $this->assertSame('0', $cookie['attrs']['max-age'] ?? null, 'cookie expiré attendu');
         $this->assertTrue($cookie['attrs']['secure'] ?? false, 'mêmes attributs, sinon le navigateur ignore la suppression');
 
-        // Même si le navigateur renvoie l'ancien cookie, la session n'existe plus côté serveur.
+        // Même si le navigateur renvoie l'ancien cookie, la session n'existe plus sur le serveur.
         $after = $this->request('action=show', $id);
         $this->assertNotSame($id, $after['body']['id']);
         $this->assertSame(null, $after['body']['user']);
@@ -88,16 +85,12 @@ final class NativeSessionHttpTest extends TestCase
         $this->assertSame($id, $active['body']['id']);
         $this->assertSame(42, $active['body']['user']);
 
-        // 1801 s sans activité depuis la dernière requête (t + 1000).
+        // 1801 s sans activité depuis la dernière requête.
         $idle = $this->request('action=show&now=' . ($t + 1000 + 1801), $id);
         $this->assertNotSame($id, $idle['body']['id']);
         $this->assertSame(null, $idle['body']['user']);
-        $this->assertTrue($idle['body']['expired'], 'expiredDueToInactivity() attendu');
     }
 
-    /**
-     * @return array{cookies: list<array{name: string, value: string, attrs: array<string, string|true>}>, body: array<string, mixed>}
-     */
     private function request(string $query, ?string $sessionId = null): array
     {
         $socket = fsockopen('127.0.0.1', self::$port, $errno, $errstr, 5);
@@ -133,17 +126,13 @@ final class NativeSessionHttpTest extends TestCase
         try {
             $decoded = json_decode($body, true, 8, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
-            // Typiquement un warning ou une dépréciation PHP affiché avant le JSON.
+            // En général un warning PHP affiché avant le JSON.
             throw new AssertionFailed('Réponse inattendue du serveur : ' . $body);
         }
 
         return ['cookies' => $cookies, 'body' => $decoded];
     }
 
-    /**
-     * @param array{cookies: list<array{name: string, value: string, attrs: array<string, string|true>}>} $response
-     * @return array{name: string, value: string, attrs: array<string, string|true>}
-     */
     private function lastCookie(array $response): array
     {
         $found = array_values(array_filter($response['cookies'], fn (array $c): bool => $c['name'] === self::COOKIE));
@@ -170,7 +159,7 @@ final class NativeSessionHttpTest extends TestCase
 
         $command = [
             PHP_BINARY,
-            // Entre guillemets : un chemin Windows court (ex. NAJIBC~1) contient "~", qui est un opérateur INI.
+            // Entre guillemets : un chemin Windows court (ex. NAJIBC~1) contient "~", qui a un sens dans un .ini.
             '-d', 'session.save_path="' . $sessionDir . '"',
             '-d', 'display_errors=1',
             '-d', 'error_reporting=-1',

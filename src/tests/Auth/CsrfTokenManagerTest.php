@@ -6,7 +6,7 @@ namespace Tests\Auth;
 
 use App\Auth\Csrf\CsrfTokenManager;
 use App\Auth\Exception\CsrfTokenMismatchException;
-use App\Auth\Session\ArraySession;
+use Tests\Auth\Support\ArraySession;
 
 final class CsrfTokenManagerTest extends TestCase
 {

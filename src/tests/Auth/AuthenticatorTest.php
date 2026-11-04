@@ -8,7 +8,7 @@ use App\Auth\Authenticator;
 use App\Auth\Csrf\CsrfTokenManager;
 use App\Auth\Exception\AuthenticationException;
 use App\Auth\PasswordHasher;
-use App\Auth\Session\ArraySession;
+use Tests\Auth\Support\ArraySession;
 use Tests\Auth\Support\FakeUser;
 use Tests\Auth\Support\InMemoryUserProvider;
 
@@ -64,7 +64,7 @@ final class AuthenticatorTest extends TestCase
 
     public function test_email_inconnu_prend_autant_de_temps_qu_un_mauvais_mot_de_passe(): void
     {
-        // Paramètres plus lourds pour que le coût d'Argon2id domine le bruit de mesure.
+        // Paramètres plus lourds pour que le temps d'Argon2id dépasse largement le bruit de mesure.
         $hasher = new PasswordHasher(['memory_cost' => 16384, 'time_cost' => 2, 'threads' => 1]);
         $this->users->add(new FakeUser(2, 'bob@caddistan.test', $hasher->hash(self::PASSWORD)));
         $auth = new Authenticator($this->session, $this->users, $hasher, $this->csrf);

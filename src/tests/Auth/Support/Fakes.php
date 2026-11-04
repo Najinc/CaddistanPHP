@@ -6,12 +6,10 @@ namespace Tests\Auth\Support;
 
 use App\Auth\Authenticatable;
 use App\Auth\Authorization\OwnedResource;
+use App\Auth\Session\SessionInterface;
 use App\Auth\UserProviderInterface;
 
-/*
- * Doublures de test : elles remplacent le modèle User et le dépôt de la Partie 2,
- * pour tester la Partie 3 sans base de données.
- */
+// Faux objets en mémoire : ils remplacent la base de données et la vraie session dans les tests.
 
 final class FakeUser implements Authenticatable
 {
@@ -85,5 +83,42 @@ final class FakeOrder implements OwnedResource
     public function getOwnerId(): int
     {
         return $this->ownerId;
+    }
+}
+
+final class ArraySession implements SessionInterface
+{
+    private array $data = [];
+    private string $id;
+
+    public function __construct()
+    {
+        $this->id = bin2hex(random_bytes(16));
+    }
+
+    public function id(): string
+    {
+        return $this->id;
+    }
+
+    public function get(string $key, mixed $default = null): mixed
+    {
+        return $this->data[$key] ?? $default;
+    }
+
+    public function set(string $key, mixed $value): void
+    {
+        $this->data[$key] = $value;
+    }
+
+    public function regenerate(): void
+    {
+        $this->id = bin2hex(random_bytes(16));
+    }
+
+    public function destroy(): void
+    {
+        $this->data = [];
+        $this->regenerate();
     }
 }
