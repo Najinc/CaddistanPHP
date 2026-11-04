@@ -7,6 +7,7 @@ use App\Core\HttpException;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\Validator;
+use App\Mail\Mailer;
 use App\Repositories\OrderRepository;
 use App\Services\Cart;
 use App\Services\OrderException;
@@ -56,6 +57,13 @@ final class CheckoutController extends Controller
         }
 
         Cart::clear();
+        Mailer::send(
+            (string) Auth::user()['email'],
+            'Commande n°' . $orderId . ' confirmée',
+            "Merci pour votre commande !\n\nVous pouvez suivre sa livraison sans vous connecter pendant 7 jours.",
+            TrackingController::linkFor($orderId),
+            'Suivre ma commande',
+        );
         Session::flash('success', 'Commande validée, merci !');
 
         return $this->redirect('/commande/confirmation/' . $orderId);

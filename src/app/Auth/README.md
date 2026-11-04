@@ -13,7 +13,7 @@ La logique est dans `app/Auth/`, les tests dans `tests/Auth/`. Le reste du site 
 | `Csrf/CsrfTokenManager` | Token CSRF par session, vérifié avec `hash_equals` sur tout sauf GET, HEAD et OPTIONS |
 | `Authorization/Gate` + `permissions.php` | Rôles → permissions (refus par défaut), contrôle de propriété (404) |
 | `Signing/UrlSigner` | URL signées : HMAC-SHA256 avec `APP_KEY`, expiration |
-| `Signing/MagicLink` | Bonus, non branché : connexion par lien email, 15 min, usage unique |
+| `Signing/MagicLink` + `Signing/FileUsedTokenStore` | Bonus : connexion par lien email, 15 min, usage unique (`/connexion/sans-mot-de-passe`, hors production) |
 | `SafeRedirect` | Redirection après login sans open redirect |
 | `Exception/*` | Erreurs 401, 403 et 404. Elles héritent de `App\Core\HttpException`, donc `index.php` les affiche |
 | `Bridge/*` | Adaptent les tableaux SQL des repositories aux interfaces de la Partie 3, sans ajouter de SQL |
@@ -79,8 +79,6 @@ hachés).
 - Requêtes préparées dans `UserRepository` (la recherche par email sert au login) et `OrderRepository`.
 - `UserRepository::findByCredentials()` n'est plus utilisée : elle peut être supprimée.
 - Le rôle ne vient jamais d'une saisie utilisateur.
-- Magic links (si on les branche) : implémenter `UsedTokenStoreInterface`, par exemple avec une table
-  `used_tokens(token VARCHAR(100) PRIMARY KEY, expires_at INT)`.
 
 **Partie 4 (Erwan)**
 - `Referrer-Policy: strict-origin-when-cross-origin` au minimum sur tout le site (la page de suivi envoie

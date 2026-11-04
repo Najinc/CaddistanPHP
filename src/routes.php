@@ -10,8 +10,10 @@ use App\Controllers\Api\ProductApiController;
 use App\Controllers\AuthController;
 use App\Controllers\CartController;
 use App\Controllers\CheckoutController;
+use App\Controllers\DevMailController;
 use App\Controllers\DocumentController;
 use App\Controllers\HomeController;
+use App\Controllers\MagicLinkController;
 use App\Controllers\MediaController;
 use App\Controllers\ProductController;
 use App\Controllers\ReviewController;
@@ -43,6 +45,11 @@ $router->post('/connexion', [AuthController::class, 'login']);
 $router->get('/inscription', [AuthController::class, 'showRegister']);
 $router->post('/inscription', [AuthController::class, 'register']);
 $router->post('/deconnexion', [AuthController::class, 'logout']);
+$router->get('/connexion/sans-mot-de-passe', [MagicLinkController::class, 'create']);
+$router->post('/connexion/sans-mot-de-passe', [MagicLinkController::class, 'send']);
+$router->get('/connexion/lien', [MagicLinkController::class, 'show']);
+$router->post('/connexion/lien', [MagicLinkController::class, 'login']);
+$router->post('/dev/mails/vider', [DevMailController::class, 'clear']);
 
 // Espace client
 $router->get('/compte', [AccountController::class, 'index']);
