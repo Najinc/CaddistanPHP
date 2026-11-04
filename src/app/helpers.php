@@ -3,6 +3,7 @@
 /** Quelques fonctions utilitaires */
 
 use App\Core\Auth;
+use App\Core\SecurityHeaders;
 use App\Core\Session;
 use App\Core\View;
 
@@ -33,6 +34,9 @@ function require_env(array $keys): void
         error_log('Configuration incomplète, variable(s) manquante(s) : ' . implode(', ', $missing));
         http_response_code(500);
         header('Content-Type: text/plain; charset=UTF-8');
+        foreach (SecurityHeaders::all() as $name => $value) {
+            header($name . ': ' . $value);
+        }
         exit('Application mal configurée.');
     }
 }

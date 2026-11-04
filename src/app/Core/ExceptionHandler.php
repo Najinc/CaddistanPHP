@@ -210,6 +210,9 @@ final class ExceptionHandler
         if (!headers_sent()) {
             http_response_code(500);
             header('Content-Type: text/html; charset=UTF-8');
+            foreach (SecurityHeaders::all() as $name => $value) {
+                header($name . ': ' . $value);
+            }
         }
 
         echo '<h1>Erreur 500</h1><p>' . self::GENERIC_MESSAGE . '</p><p>Référence : '
